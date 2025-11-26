@@ -8,7 +8,7 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold text-gray-800">Portfolio Summary</h2>
-            <span class="text-sm text-gray-500">{{ holdings|length }} holdings</span>
+            <span class="text-sm text-gray-500">{{ holdings|length }} holdings{% if holdings_no_price %} ({{ holdings_no_price|length }} hidden - no price data){% endif %}</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-gray-50 rounded p-4">

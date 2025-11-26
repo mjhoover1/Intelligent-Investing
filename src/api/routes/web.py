@@ -67,8 +67,14 @@ def dashboard(
             "pnl_pct": pnl_pct,
         })
 
+    # Filter out holdings with no price data
+    # TODO: Add support for warrant tickers (e.g., IONQ/WS) - Yahoo Finance
+    # doesn't support these. Consider alternative data sources or manual entry.
+    holdings_with_prices = [h for h in holdings_data if h["current_price"] is not None]
+    holdings_without_prices = [h for h in holdings_data if h["current_price"] is None]
+
     # Sort by market value descending
-    holdings_data.sort(key=lambda x: x["market_value"] or 0, reverse=True)
+    holdings_with_prices.sort(key=lambda x: x["market_value"] or 0, reverse=True)
 
     # Calculate portfolio totals
     total_pnl = total_value - total_cost
@@ -103,7 +109,8 @@ def dashboard(
         "dashboard.html",
         {
             "request": request,
-            "holdings": holdings_data,
+            "holdings": holdings_with_prices,
+            "holdings_no_price": holdings_without_prices,
             "rules": rules_data,
             "alerts": alerts_db,
             "total_value": total_value,
