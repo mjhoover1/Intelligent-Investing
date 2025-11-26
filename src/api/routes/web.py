@@ -6,13 +6,15 @@ from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db, get_current_user
 from src.db.models import Alert, Holding, Rule
 from src.data.market.provider import market_data
+from src.core.strategies import list_presets, get_preset
+from src.core.rules.repository import RuleRepository
 
 router = APIRouter()
 
@@ -104,6 +106,17 @@ def dashboard(
         .all()
     )
 
+    # Get strategy presets and check which are active
+    strategies = list_presets()
+    active_strategies = set()
+    for preset in strategies:
+        count = db.query(Rule).filter(
+            Rule.user_id == user.id,
+            Rule.name.like(f"[{preset.id}]%"),
+        ).count()
+        if count > 0:
+            active_strategies.add(preset.id)
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -116,5 +129,46 @@ def dashboard(
             "total_cost": total_cost,
             "total_pnl": total_pnl,
             "total_pnl_pct": total_pnl_pct,
+            "strategies": strategies,
+            "active_strategies": active_strategies,
         },
     )
+
+
+@router.post("/strategies/{strategy_id}/apply")
+def apply_strategy_from_dashboard(
+    strategy_id: str,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Apply a strategy preset from the dashboard."""
+    preset = get_preset(strategy_id)
+
+    if not preset:
+        return RedirectResponse(url="/", status_code=303)
+
+    repo = RuleRepository(db)
+
+    # Check for existing rules from this strategy
+    existing = db.query(Rule).filter(
+        Rule.user_id == user.id,
+        Rule.name.like(f"[{preset.id}]%")
+    ).all()
+
+    # Skip if already applied
+    if existing:
+        return RedirectResponse(url="/", status_code=303)
+
+    # Create new rules
+    for rule_template in preset.rules:
+        repo.create(
+            name=rule_template.name,
+            rule_type=rule_template.rule_type,
+            threshold=rule_template.threshold,
+            symbol=rule_template.symbol,
+            enabled=True,
+            cooldown_minutes=rule_template.cooldown_minutes,
+            user_id=user.id,
+        )
+
+    return RedirectResponse(url="/", status_code=303)

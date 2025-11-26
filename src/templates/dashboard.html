@@ -32,6 +32,42 @@
         </div>
     </div>
 
+    <!-- Strategy Presets -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Strategy Presets</h2>
+            <span class="text-sm text-gray-500">One-click rule bundles</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for strategy in strategies %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-semibold text-gray-800">{{ strategy.name }}</h3>
+                    <span class="px-2 py-1 text-xs rounded-full
+                        {% if strategy.risk_level == 'conservative' %}bg-green-100 text-green-800
+                        {% elif strategy.risk_level == 'medium' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ strategy.risk_level }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600 mb-3">{{ strategy.description[:80] }}{% if strategy.description|length > 80 %}...{% endif %}</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-500">{{ strategy.rules|length }} rules</span>
+                    {% if strategy.id in active_strategies %}
+                    <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
+                    {% else %}
+                    <form method="POST" action="/strategies/{{ strategy.id }}/apply" class="inline">
+                        <button type="submit" class="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
+                            Apply
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Holdings Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
