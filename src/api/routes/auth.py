@@ -1,13 +1,13 @@
 """Authentication API routes."""
 
-from __future__ import annotations
-
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db, get_current_user
@@ -15,6 +15,9 @@ from src.core.auth import AuthService, get_auth_service
 from src.db.models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# Rate limiter for auth endpoints
+limiter = Limiter(key_func=get_remote_address)
 
 
 # Request/Response Models
@@ -96,7 +99,9 @@ class ApiKeyCreatedResponse(BaseModel):
 # Public Routes (no auth required)
 
 @router.post("/register", response_model=AuthResponse)
+@limiter.limit("5/minute")  # 5 registrations per minute per IP
 def register(
+    request_obj: Request,
     request: RegisterRequest,
     db: Session = Depends(get_db),
 ):
@@ -128,7 +133,9 @@ def register(
 
 
 @router.post("/login", response_model=AuthResponse)
+@limiter.limit("10/minute")  # 10 login attempts per minute per IP
 def login(
+    request_obj: Request,
     request: LoginRequest,
     db: Session = Depends(get_db),
 ):
@@ -161,7 +168,9 @@ def login(
 
 
 @router.post("/token", response_model=TokenResponse)
+@limiter.limit("10/minute")  # 10 token requests per minute per IP
 def login_for_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):

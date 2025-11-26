@@ -30,6 +30,18 @@ def landing(request: Request):
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
+@router.get("/terms", response_class=HTMLResponse)
+def terms_of_service(request: Request):
+    """Render the Terms of Service page."""
+    return templates.TemplateResponse("legal.html", {"request": request, "page": "terms"})
+
+
+@router.get("/privacy", response_class=HTMLResponse)
+def privacy_policy(request: Request):
+    """Render the Privacy Policy page."""
+    return templates.TemplateResponse("legal.html", {"request": request, "page": "privacy"})
+
+
 @router.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,

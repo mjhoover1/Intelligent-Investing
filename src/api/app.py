@@ -2,18 +2,29 @@
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from src.db.database import init_db
 from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth, brokers, onboarding, metrics
 from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION, PRODUCT_DESCRIPTION
+
+# Rate limiter - key by IP address
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title=f"{PRODUCT_NAME} API",
     description=PRODUCT_DESCRIPTION,
     version=PRODUCT_VERSION,
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Mount static files
 static_dir = Path(__file__).parent.parent / "static"
