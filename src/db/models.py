@@ -49,6 +49,7 @@ class User(Base):
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
     notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False)
+    broker_accounts = relationship("LinkedBrokerAccount", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"
@@ -229,3 +230,41 @@ class NotificationSettings(Base):
 
     def __repr__(self) -> str:
         return f"<NotificationSettings(user_id={self.user_id}, telegram={self.telegram_enabled})>"
+
+
+class LinkedBrokerAccount(Base):
+    """Linked brokerage account for automatic position syncing."""
+
+    __tablename__ = "linked_broker_accounts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Broker identification
+    broker_type = Column(String(50), nullable=False)  # 'plaid', 'schwab', 'robinhood', etc.
+    broker_name = Column(String(100), nullable=True)  # Display name (e.g., "Charles Schwab - IRA")
+    account_id = Column(String(255), nullable=False)  # External account ID from broker/Plaid
+    account_mask = Column(String(10), nullable=True)  # Last 4 digits for display
+
+    # Plaid-specific fields
+    plaid_item_id = Column(String(255), nullable=True)  # Plaid Item ID
+    plaid_access_token = Column(String(255), nullable=True)  # Encrypted access token
+
+    # Sync settings
+    sync_enabled = Column(Boolean, default=True, nullable=False)
+    sync_mode = Column(String(20), default="upsert", nullable=False)  # 'upsert', 'replace'
+    last_synced_at = Column(DateTime, nullable=True)
+    last_sync_error = Column(Text, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True, nullable=False)
+    needs_reauth = Column(Boolean, default=False, nullable=False)
+
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="broker_accounts")
+
+    def __repr__(self) -> str:
+        return f"<LinkedBrokerAccount(id={self.id}, broker={self.broker_type}, account={self.account_mask})>"

@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # API Security
     api_key: str = ""  # Set in .env for production
 
+    # Plaid Integration (for broker sync)
+    plaid_client_id: str = ""
+    plaid_secret: str = ""
+    plaid_env: str = "sandbox"  # sandbox, development, production
+
     class Config:
         env_file = ".env"
         case_sensitive = False

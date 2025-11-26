@@ -39,6 +39,7 @@ from src.cli.monitor import app as monitor_app
 from src.cli.notifications import app as notifications_app
 from src.cli.strategies import app as strategies_app
 from src.cli.users import app as users_app
+from src.cli.brokers import app as brokers_app
 
 app.add_typer(portfolio_app, name="portfolio", help="Manage portfolio holdings")
 app.add_typer(rules_app, name="rules", help="Manage alert rules")
@@ -47,6 +48,7 @@ app.add_typer(monitor_app, name="monitor", help="Run monitoring cycles")
 app.add_typer(notifications_app, name="notifications", help="Manage notification settings")
 app.add_typer(strategies_app, name="strategies", help="Strategy presets - one-click rule bundles")
 app.add_typer(users_app, name="users", help="User management and authentication")
+app.add_typer(brokers_app, name="brokers", help="Broker integrations and position sync")
 
 
 @app.command()
