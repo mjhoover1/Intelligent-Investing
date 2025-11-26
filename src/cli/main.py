@@ -36,11 +36,13 @@ from src.cli.portfolio import app as portfolio_app
 from src.cli.rules import app as rules_app
 from src.cli.alerts import app as alerts_app
 from src.cli.monitor import app as monitor_app
+from src.cli.notifications import app as notifications_app
 
 app.add_typer(portfolio_app, name="portfolio", help="Manage portfolio holdings")
 app.add_typer(rules_app, name="rules", help="Manage alert rules")
 app.add_typer(alerts_app, name="alerts", help="View and manage alerts")
 app.add_typer(monitor_app, name="monitor", help="Run monitoring cycles")
+app.add_typer(notifications_app, name="notifications", help="Manage notification settings")
 
 
 @app.command()

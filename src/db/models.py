@@ -164,3 +164,29 @@ class MarketDataCache(Base):
 
     def __repr__(self) -> str:
         return f"<MarketDataCache(symbol={self.symbol}, 52wk_high={self.high_52_week})>"
+
+
+class NotificationSettings(Base):
+    """User notification settings."""
+
+    __tablename__ = "notification_settings"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Telegram settings
+    telegram_enabled = Column(Boolean, default=False, nullable=False)
+    telegram_chat_id = Column(String(50), nullable=True)
+
+    # Console settings (for development)
+    console_enabled = Column(Boolean, default=True, nullable=False)
+
+    # Future: email, SMS, etc.
+    # email_enabled = Column(Boolean, default=False, nullable=False)
+    # email_address = Column(String(255), nullable=True)
+
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<NotificationSettings(user_id={self.user_id}, telegram={self.telegram_enabled})>"

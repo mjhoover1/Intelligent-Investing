@@ -8,16 +8,62 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from src.db.database import get_db
-from src.db.models import Alert, User
+from src.db.models import Alert, NotificationSettings, User
 from src.core.rules.engine import RuleEngine
 from src.core.alerts.service import AlertService
-from src.core.alerts.notifier import console_notifier
+from src.core.alerts.notifier import (
+    BaseNotifier,
+    console_notifier,
+    MultiNotifier,
+    TelegramNotifier,
+)
 from src.data.market.provider import MarketDataProvider, market_data
 from src.ai.context.generator import get_context_generator
 from src.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+
+def get_notifier(db: Session, user_id: str) -> BaseNotifier:
+    """Build the appropriate notifier based on user's notification settings.
+
+    Args:
+        db: Database session
+        user_id: User ID
+
+    Returns:
+        Configured notifier (single or multi-channel)
+    """
+    # Get user's notification settings
+    ns = db.query(NotificationSettings).filter_by(user_id=user_id).first()
+
+    notifiers: List[BaseNotifier] = []
+
+    # Console is always enabled unless explicitly disabled
+    if not ns or ns.console_enabled:
+        notifiers.append(console_notifier)
+
+    # Telegram if enabled and configured
+    if ns and ns.telegram_enabled:
+        chat_id = ns.telegram_chat_id or settings.telegram_chat_id
+        if settings.telegram_bot_token and chat_id:
+            notifiers.append(TelegramNotifier(settings.telegram_bot_token, chat_id))
+            logger.debug("Telegram notifier enabled")
+        else:
+            logger.warning("Telegram enabled but not configured (missing token or chat_id)")
+    elif settings.telegram_bot_token and settings.telegram_chat_id:
+        # Also check .env settings even without DB entry
+        notifiers.append(TelegramNotifier(settings.telegram_bot_token, settings.telegram_chat_id))
+        logger.debug("Telegram notifier enabled from .env")
+
+    # Return appropriate notifier
+    if len(notifiers) == 0:
+        return console_notifier
+    elif len(notifiers) == 1:
+        return notifiers[0]
+    else:
+        return MultiNotifier(notifiers)
 
 
 class MonitorService:
@@ -72,10 +118,13 @@ class MonitorService:
         if self.use_ai:
             context_generator = get_context_generator()
 
+        # Get the appropriate notifier based on user's settings
+        notifier = get_notifier(db, user_id)
+
         # Create alert service with market provider for enriched context
         service = AlertService(
             db=db,
-            notifier=console_notifier,
+            notifier=notifier,
             context_generator=context_generator,
             generate_ai_context=self.use_ai,
             market_provider=self.market_provider,
