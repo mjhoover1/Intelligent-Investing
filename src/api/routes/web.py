@@ -67,9 +67,8 @@ def dashboard(
             "pnl_pct": pnl_pct,
         })
 
-    # Filter out holdings with no price data
-    # TODO: Add support for warrant tickers (e.g., IONQ/WS) - Yahoo Finance
-    # doesn't support these. Consider alternative data sources or manual entry.
+    # Filter out holdings with no price data (shouldn't happen often now that
+    # warrant symbols like IONQ/WS are normalized to Yahoo's -WT format)
     holdings_with_prices = [h for h in holdings_data if h["current_price"] is not None]
     holdings_without_prices = [h for h in holdings_data if h["current_price"] is None]
 

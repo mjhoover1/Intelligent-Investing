@@ -16,6 +16,39 @@ from src.db.models import IndicatorCache, MarketDataCache, PriceCache
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# Symbol format mappings for Yahoo Finance compatibility
+# Maps user-friendly formats to Yahoo Finance formats
+SYMBOL_MAPPINGS = {
+    # Warrant formats: /WS -> -WT (Yahoo Finance warrant suffix)
+    "/WS": "-WT",
+    "/W": "-WT",
+    ".WS": "-WT",
+    ".W": "-WT",
+}
+
+
+def normalize_symbol(symbol: str) -> tuple[str, str]:
+    """Normalize a symbol to Yahoo Finance format.
+
+    Args:
+        symbol: Original symbol (e.g., 'IONQ/WS')
+
+    Returns:
+        Tuple of (yahoo_symbol, original_symbol)
+    """
+    original = symbol.upper()
+    yahoo_symbol = original
+
+    # Check for known suffix mappings
+    for suffix, yahoo_suffix in SYMBOL_MAPPINGS.items():
+        if original.endswith(suffix.upper()):
+            base = original[: -len(suffix)]
+            yahoo_symbol = base + yahoo_suffix
+            logger.debug(f"Normalized symbol {original} -> {yahoo_symbol}")
+            break
+
+    return yahoo_symbol, original
+
 
 class MarketDataProvider:
     """Market data provider with database-backed caching."""
@@ -32,24 +65,25 @@ class MarketDataProvider:
         """Get current price for a symbol.
 
         Args:
-            symbol: Stock ticker symbol (e.g., 'AAPL')
+            symbol: Stock ticker symbol (e.g., 'AAPL', 'IONQ/WS')
             db: Database session
 
         Returns:
             Current price or None if unavailable
         """
-        symbol = symbol.upper()
+        # Normalize symbol for Yahoo Finance (e.g., IONQ/WS -> IONQ-WT)
+        yahoo_symbol, original_symbol = normalize_symbol(symbol)
         now = datetime.utcnow()
 
-        # Check cache first
-        cached = db.query(PriceCache).filter_by(symbol=symbol).first()
+        # Check cache first (use original symbol for cache key)
+        cached = db.query(PriceCache).filter_by(symbol=original_symbol).first()
         if cached and cached.fetched_at > now - timedelta(seconds=self.cache_seconds):
-            logger.debug(f"Cache hit for {symbol}: ${cached.price}")
+            logger.debug(f"Cache hit for {original_symbol}: ${cached.price}")
             return cached.price
 
-        # Fetch from yfinance with fallback
+        # Fetch from yfinance with fallback (use Yahoo symbol)
         try:
-            ticker = yf.Ticker(symbol)
+            ticker = yf.Ticker(yahoo_symbol)
             price = ticker.info.get("currentPrice") or ticker.info.get(
                 "regularMarketPrice"
             )
@@ -61,21 +95,21 @@ class MarketDataProvider:
                     price = float(hist["Close"].iloc[-1])
 
             if price is None:
-                logger.warning(f"Could not fetch price for {symbol}")
+                logger.warning(f"Could not fetch price for {original_symbol} (Yahoo: {yahoo_symbol})")
                 return None
 
-            # Update cache
+            # Update cache (use original symbol as cache key)
             if cached:
                 cached.price = price
                 cached.fetched_at = now
             else:
-                db.add(PriceCache(symbol=symbol, price=price, fetched_at=now))
+                db.add(PriceCache(symbol=original_symbol, price=price, fetched_at=now))
 
-            logger.debug(f"Fetched {symbol}: ${price}")
+            logger.debug(f"Fetched {original_symbol}: ${price}")
             return price
 
         except Exception as e:
-            logger.error(f"yfinance error for {symbol}: {e}")
+            logger.error(f"yfinance error for {original_symbol}: {e}")
             return None
 
     def get_prices(self, symbols: list[str], db: Session) -> dict[str, float]:
