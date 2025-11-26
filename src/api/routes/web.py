@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_db, get_current_user
-from src.db.models import Alert, Holding, Rule
+from src.api.deps import get_db, get_web_user
+from src.db.models import Alert, Holding, Rule, User
 from src.data.market.provider import market_data
 from src.core.strategies import list_presets, get_preset
 from src.core.rules.repository import RuleRepository
@@ -33,9 +33,16 @@ def landing(request: Request):
 def dashboard(
     request: Request,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_web_user),
 ):
     """Render the main dashboard."""
+    # Redirect to onboarding if not authenticated or onboarding incomplete
+    if not user:
+        return RedirectResponse(url="/onboarding", status_code=303)
+
+    if not user.onboarding_completed_at:
+        return RedirectResponse(url=f"/onboarding?step={user.onboarding_step}", status_code=303)
+
     # Get holdings with current prices
     holdings_db: List[Holding] = (
         db.query(Holding).filter(Holding.user_id == user.id).all()
@@ -143,11 +150,15 @@ def dashboard(
 
 @router.post("/strategies/{strategy_id}/apply")
 def apply_strategy_from_dashboard(
+    request: Request,
     strategy_id: str,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_web_user),
 ):
     """Apply a strategy preset from the dashboard."""
+    if not user:
+        return RedirectResponse(url="/onboarding", status_code=303)
+
     preset = get_preset(strategy_id)
 
     if not preset:

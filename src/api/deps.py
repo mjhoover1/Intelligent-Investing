@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Generator, Optional
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -188,3 +188,37 @@ def get_optional_user(
         return get_current_user(db, token, bearer, x_api_key)
     except HTTPException:
         return None
+
+
+def get_web_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """Get user from session cookie for web routes.
+
+    Returns None instead of raising HTTPException to allow
+    web routes to handle redirects gracefully.
+    """
+    # Try cookie-based auth first (for web dashboard)
+    access_token = request.cookies.get("access_token")
+    if access_token:
+        user = _get_user_from_jwt(access_token, db)
+        if user:
+            return user
+
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and user.is_active:
+            return user
+
+    # Fallback: If no global API key configured, use default user (dev mode)
+    if not settings.api_key:
+        default_user = db.query(User).filter_by(email=settings.default_user_email).first()
+        if not default_user:
+            default_user = User(email=settings.default_user_email, is_active=True)
+            db.add(default_user)
+            db.flush()
+        return default_user
+
+    return None

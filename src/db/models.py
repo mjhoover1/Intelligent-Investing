@@ -43,6 +43,10 @@ class User(Base):
     created_at = Column(DateTime, default=utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
 
+    # Onboarding tracking
+    onboarding_step = Column(Integer, default=1, nullable=False)  # Current step (1-4)
+    onboarding_completed_at = Column(DateTime, nullable=True)  # Null = not completed
+
     # Relationships
     holdings = relationship("Holding", back_populates="user", cascade="all, delete-orphan")
     rules = relationship("Rule", back_populates="user", cascade="all, delete-orphan")
