@@ -1,0 +1,46 @@
+# Intelligent Investing - Docker Compose Configuration
+# Usage: docker compose up -d
+
+version: "3.8"
+
+services:
+  # API Server
+  web:
+    build: .
+    container_name: intelligent-investing-web
+    command: web
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Monitor Worker (runs evaluation cycles)
+  worker:
+    build: .
+    container_name: intelligent-investing-worker
+    command: worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+
+# Persistent volume for SQLite database
+volumes:
+  data:

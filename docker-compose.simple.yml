@@ -1,0 +1,29 @@
+# Intelligent Investing - Simple Single-Container Deployment
+# Usage: docker compose -f docker-compose.simple.yml up -d
+#
+# This runs both the API server and monitor worker in one container.
+# Good for personal use on a small VPS.
+
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: intelligent-investing
+    command: both
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+      - MONITOR_INTERVAL_SECONDS=300
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
