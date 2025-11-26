@@ -23,6 +23,12 @@ templates_dir = Path(__file__).parent.parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
 
+@router.get("/landing", response_class=HTMLResponse)
+def landing(request: Request):
+    """Render the marketing landing page."""
+    return templates.TemplateResponse("landing.html", {"request": request})
+
+
 @router.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Signal Sentinel - Your AI-powered market watchdog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Signal Sentinel is an AI-powered rule-based portfolio monitoring tool that watches your holdings 24/7 and sends intelligent alerts." />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .font-montserrat { font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-50">
+  <!-- Navbar -->
+  <nav class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-lg">
+          SS
+        </div>
+        <span class="font-montserrat text-xl font-semibold tracking-tight">Signal Sentinel</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm text-slate-300">
+        <a href="#features" class="hover:text-indigo-400">Features</a>
+        <a href="#how-it-works" class="hover:text-indigo-400">How it works</a>
+        <a href="#pricing" class="hover:text-indigo-400">Pricing</a>
+        <a href="/" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md text-xs font-semibold">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="max-w-6xl mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10">
+    <div class="flex-1">
+      <h1 class="font-montserrat text-4xl md:text-5xl font-bold tracking-tight mb-4">
+        Your AI-powered <span class="text-indigo-400">market watchdog.</span>
+      </h1>
+      <p class="text-slate-300 text-sm md:text-base mb-6 max-w-xl">
+        Signal Sentinel watches your portfolio 24/7, checks price moves, RSI zones, and 52-week ranges against rules you define, and sends clear, AI-enhanced alerts when it's time to pay attention.
+      </p>
+      <div class="flex flex-wrap gap-3 mb-6">
+        <a href="/" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-md text-sm font-semibold">
+          Open Dashboard
+        </a>
+        <a href="#features" class="border border-slate-700 text-slate-200 hover:border-indigo-500 px-5 py-2.5 rounded-md text-sm">
+          View features
+        </a>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-slate-400">
+        <div class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-green-400"></span>
+          <span>24/7 monitoring</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+          <span>AI summaries</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+          <span>Rule-based alerts</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs text-slate-400">Portfolio value</p>
+            <p class="text-2xl font-montserrat font-semibold text-slate-50">$128,430</p>
+          </div>
+          <div class="px-3 py-1 rounded-full bg-green-500/15 text-green-400 text-xs font-medium">
+            +12.4% YTD
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-xs mb-4">
+          <div class="bg-slate-800/70 rounded-md p-3">
+            <p class="text-slate-400 mb-1">Active rules</p>
+            <p class="text-lg font-semibold">18</p>
+          </div>
+          <div class="bg-slate-800/70 rounded-md p-3">
+            <p class="text-slate-400 mb-1">Signals this week</p>
+            <p class="text-lg font-semibold">7</p>
+          </div>
+          <div class="bg-slate-800/70 rounded-md p-3">
+            <p class="text-slate-400 mb-1">Noise filtered</p>
+            <p class="text-lg font-semibold text-teal-400">63%</p>
+          </div>
+        </div>
+        <div class="space-y-2 text-xs">
+          <p class="text-slate-400 mb-1">Recent alerts</p>
+
+          <div class="bg-slate-800/80 rounded-md px-3 py-2 flex items-center justify-between">
+            <div>
+              <p class="font-medium text-slate-50">AUR - RSI oversold</p>
+              <p class="text-slate-400 text-[11px]">RSI 24.8 - Price -18.3% vs cost</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 text-[10px]">watch</span>
+          </div>
+
+          <div class="bg-slate-800/80 rounded-md px-3 py-2 flex items-center justify-between">
+            <div>
+              <p class="font-medium text-slate-50">IONQ - profit target hit</p>
+              <p class="text-slate-400 text-[11px]">+62.4% vs cost - near 52w high</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 text-[10px]">review</span>
+          </div>
+
+          <div class="bg-slate-800/80 rounded-md px-3 py-2 flex items-center justify-between">
+            <div>
+              <p class="font-medium text-slate-50">BYND - drawdown guardrail</p>
+              <p class="text-slate-400 text-[11px]">-28.7% vs cost - below support</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 text-[10px]">risk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="max-w-6xl mx-auto px-4 py-12">
+    <h2 class="font-montserrat text-2xl font-semibold mb-2">Designed for serious investors and traders.</h2>
+    <p class="text-slate-300 text-sm mb-6">
+      Signal Sentinel doesn't tell you what to buy or sell. It makes sure you never miss the conditions you care about most.
+    </p>
+    <div class="grid md:grid-cols-3 gap-5 text-sm">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 class="font-semibold mb-1">Smart rule engine</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          Define rules based on price, percentage moves, RSI thresholds, and 52-week levels for individual tickers or your whole portfolio.
+        </p>
+        <p class="text-[11px] text-slate-500">Examples: "Alert me if any stock falls 20% below my cost basis" or "Ping me when RSI &gt; 70 on swing positions."</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 class="font-semibold mb-1">AI-enhanced context</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          When an alert fires, Signal Sentinel adds a concise AI summary so you see the why: price action, RSI, 52-week context, and sentiment.
+        </p>
+        <p class="text-[11px] text-slate-500">No advice-just the data and patterns that matter.</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 class="font-semibold mb-1">Signal quality tracking</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          Rate alerts as useful, actionable, or noise. Over time, learn which rules and strategies actually help your decision-making.
+        </p>
+        <p class="text-[11px] text-slate-500">Tune your system like a trading algorithm, without writing code.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how-it-works" class="max-w-6xl mx-auto px-4 py-12">
+    <h2 class="font-montserrat text-2xl font-semibold mb-4">How Signal Sentinel works</h2>
+    <div class="grid md:grid-cols-3 gap-5 text-sm">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs font-semibold text-indigo-300 mb-1">Step 1</p>
+        <h3 class="font-semibold mb-1">Connect or import your portfolio</h3>
+        <p class="text-slate-300 text-xs">
+          Import positions from Schwab CSV or connect via Plaid. Your holdings and cost basis stay in your control.
+        </p>
+      </div>
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs font-semibold text-indigo-300 mb-1">Step 2</p>
+        <h3 class="font-semibold mb-1">Apply strategies or define rules</h3>
+        <p class="text-slate-300 text-xs">
+          Use built-in strategy presets like capital preservation, dip hunter, or swing trader-or craft your own custom rules.
+        </p>
+      </div>
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs font-semibold text-indigo-300 mb-1">Step 3</p>
+        <h3 class="font-semibold mb-1">Let Signal Sentinel watch the markets</h3>
+        <p class="text-slate-300 text-xs">
+          The monitor daemon checks your rules on a schedule, sends Telegram alerts, and logs everything in your dashboard.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing (placeholder for future SaaS) -->
+  <section id="pricing" class="max-w-6xl mx-auto px-4 py-12">
+    <h2 class="font-montserrat text-2xl font-semibold mb-4">Built to grow with you.</h2>
+    <p class="text-slate-300 text-sm mb-6">
+      Today, Signal Sentinel is your personal project. Tomorrow, it can be a full SaaS with tiers for different types of traders.
+    </p>
+    <div class="grid md:grid-cols-3 gap-5 text-sm">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 class="font-semibold mb-1">Local / Dev</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          Run Signal Sentinel on your own machine with Docker, CLI, and REST API.
+        </p>
+        <ul class="text-[11px] text-slate-400 space-y-1">
+          <li>* CLI + API</li>
+          <li>* Web dashboard</li>
+          <li>* Telegram alerts</li>
+        </ul>
+      </div>
+      <div class="bg-slate-900 border border-indigo-500 rounded-xl p-4 shadow-lg">
+        <h3 class="font-semibold mb-1">Hosted (future)</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          Managed Signal Sentinel instance with auth, multi-user support, and automatic updates.
+        </p>
+        <ul class="text-[11px] text-slate-400 space-y-1">
+          <li>* Strategy presets</li>
+          <li>* Broker sync</li>
+          <li>* AI summaries</li>
+        </ul>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 class="font-semibold mb-1">Pro / Team (future)</h3>
+        <p class="text-slate-300 text-xs mb-2">
+          Designed for teams who need shared rules, alert streams, and risk dashboards.
+        </p>
+        <ul class="text-[11px] text-slate-400 space-y-1">
+          <li>* Team workspaces</li>
+          <li>* Shared rule libraries</li>
+          <li>* Exportable alert history</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta" class="max-w-6xl mx-auto px-4 py-12">
+    <div class="bg-indigo-600/10 border border-indigo-500/40 rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h2 class="font-montserrat text-xl font-semibold mb-1">Ready to let Signal Sentinel watch the markets for you?</h2>
+        <p class="text-slate-200 text-sm">
+          Spin up a local instance with Docker, import your portfolio, and start rating your own signals today.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <a href="/"
+           class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-md text-sm font-semibold">
+          Open Dashboard
+        </a>
+        <a href="/docs"
+           class="border border-slate-300/40 text-slate-50 hover:border-indigo-400 px-5 py-2.5 rounded-md text-sm">
+          API Docs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 mt-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 text-center text-[11px] text-slate-500">
+      &copy; 2025 Signal Sentinel. Informational alerts only. Not financial advice.
+    </div>
+  </footer>
+</body>
+</html>

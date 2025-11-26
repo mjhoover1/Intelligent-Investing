@@ -1,83 +1,130 @@
-# Signal Sentinel - Brand Guidelines
+# Signal Sentinel – Brand Guidelines
 
-## Brand Identity
+## 1. Product Identity
 
 **Name:** Signal Sentinel
+**Tagline (primary):** Your AI-powered market watchdog.
+**Alt taglines:**
+- Define the rules. Signal Sentinel watches the market.
+- Smart alerts. Zero guesswork.
+- Your portfolio's 24/7 AI market sentinel.
 
-**Primary Tagline:** Your AI-powered watchdog for market signals.
+**One-line description:**
+Signal Sentinel is a rule-based, AI-enhanced monitoring system that watches your portfolio 24/7 and sends intelligent alerts when your conditions are met.
 
-**Mission:** Define the rules. Signal Sentinel watches the market.
+---
 
-## Brand Voice
+## 2. Brand Voice
 
-- **Intelligent**: Professional, data-driven communication
-- **Vigilant**: Always-on, watchful guardian
-- **Professional**: Financial industry appropriate
-- **Calm**: Reassuring, not alarmist
-- **Reliable**: Watchdog / guardian theme
+Signal Sentinel's tone should be:
 
-## Typography
+- **Calm** – no hype, no panic.
+- **Clear** – explain signals plainly.
+- **Technical but approachable** – assume intelligent users, avoid jargon walls.
+- **Supportive** – "here's what happened and why," not "do this trade now."
 
-### Primary Font
-**Inter** (free, modern, highly legible)
-- Weights: 300, 400, 500, 600, 700
-- Use for: Body text, UI elements, data displays
+Avoid:
+- Making direct investment recommendations ("you should buy/sell…").
+- Overpromising ("guaranteed returns," "always beats the market").
 
-### Secondary Font
-**Montserrat** (for headings and branding)
-- Weights: 500, 600, 700
-- Use for: Headers, product name, hero text
+---
 
-### CSS Import
-```html
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-```
+## 3. Color Palette
 
-## Logo Concepts
+Primary colors:
 
-### A. Shield + Signal Waves (Recommended)
-- Minimalist shield outline
-- Three radiating signal curves inside
-- Blue/indigo palette
-- Represents: Protection + alerts
+- **Sentinel Indigo (Primary)** – `#4F46E5`
+  - Buttons, highlights, logo fill.
+- **Deep Signal Blue** – `#1E3A8A`
+  - Headers, navbars, backgrounds in dark mode.
 
-### B. Watchtower Silhouette + Pulse Line
-- Abstract watchtower
-- Subtle waveform running across
-- Represents: Vigilance + market insight
+Accent colors:
 
-### C. Interlocked SS Monogram
-- Geometric design
-- Modern AI/tech vibe
-- High-tech fintech aesthetic
+- **Signal Teal** – `#14B8A6`
+  - Chips, indicator labels, subtle highlights.
+- **Bull Green** – `#16A34A`
+  - Positive P&L, gains, bullish signals.
+- **Alert Red** – `#DC2626`
+  - Negative P&L, drawdowns, warning badges.
 
-### D. Sentinel Helmet + Signal Pulse
-- Spartan/helmet silhouette (subtle)
-- Combined with pulse waveform
-- Represents: Guardian + market activity
+Neutral:
 
-## Monogram (Current Implementation)
-```
-SS - Rounded square background in Sentinel Indigo (#4F46E5)
-```
+- **Soft Gray** – `#E5E7EB`
+  - Borders, table rows, light mode backgrounds.
+- **Dark Slate** – `#0F172A`
+  - Primary background for dark mode dashboard.
 
-## Domain Options
-- signalsentinel.ai
-- signalsentinel.app
-- signalsentinel.tech
-- signalsentinel.dev
-- signalsentinel.io
+Usage rules:
+- Don't mix more than 2 strong colors in a single UI element.
+- Prefer Sentinel Indigo for CTAs and key highlights.
+- Use Alert Red and Bull Green sparingly to avoid noise.
 
-## Usage Guidelines
+---
 
-### Do
-- Use consistent colors from the brand palette
-- Maintain spacing and hierarchy
-- Use the tagline in marketing materials
-- Keep messaging professional and calm
+## 4. Typography
 
-### Don't
-- Use alarmist language
-- Mix brand colors with off-brand colors
-- Modify the logo proportions
-- Use fonts outside the brand family
+**Primary UI font:** Inter
+**Brand/Heading font:** Montserrat (for logo and big headings)
+
+Suggested usage:
+- Headings: Montserrat, semi-bold or bold.
+- Body text: Inter, regular or medium.
+- Use consistent sizes:
+  - h1: 2.25rem
+  - h2: 1.5–1.75rem
+  - body: 0.875–1rem
+
+---
+
+## 5. Logo
+
+Current logo: **SS monogram in a shield with signal waves.**
+
+- Shape: Rounded shield + three curved lines indicating signal waves.
+- Primary fill: Sentinel Indigo.
+- Background: Dark Slate or white, depending on context.
+
+Do:
+- Keep it simple (works at 24x24 and 512x512).
+- Use SVG wherever possible.
+- Maintain padding around the logo (at least half the logo height on all sides).
+
+Don't:
+- Add gradients or busy textures.
+- Place the logo on clashing backgrounds (e.g., red).
+
+---
+
+## 6. Messaging Pillars
+
+All external copy and product explanations should reference at least one of:
+
+1. **Automation** – "You define rules; Signal Sentinel runs continuously."
+2. **Clarity** – "Alerts explain *why* they fired, not just that they did."
+3. **Control** – "Rules and strategies are user-defined. You stay in charge."
+4. **Safety** – "Helps you avoid surprises and better manage risk."
+
+Example short blurbs:
+
+- "Signal Sentinel helps you stay ahead of drawdowns, overbought conditions, and recovery points—without staring at charts all day."
+- "Turn your trading rules into always-on alerts with AI context."
+
+---
+
+## 7. Legal / Positioning
+
+Signal Sentinel is:
+
+- A **tool for monitoring and analysis**.
+- Not a registered investment advisor.
+- Not making personalized buy/sell recommendations.
+
+Suggested legal line to include in footer / alerts:
+
+> "Signal Sentinel provides informational alerts only and does not provide financial, investment, or trading advice."
+
+---
+
+## 8. Product Summary (for README, landing page, etc.)
+
+> Signal Sentinel is an AI-assisted portfolio monitoring platform that watches your holdings around the clock, checks conditions you define (price thresholds, RSI zones, 52-week ranges, recovery milestones), and sends you alerts with clear, contextual explanations. You stay in control of every decision—Signal Sentinel just makes sure you never miss the moments that matter.
