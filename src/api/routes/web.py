@@ -15,6 +15,7 @@ from src.db.models import Alert, Holding, Rule, User
 from src.data.market.provider import market_data
 from src.core.strategies import list_presets, get_preset
 from src.core.rules.repository import RuleRepository
+from src.core.metrics import MetricsService
 
 router = APIRouter()
 
@@ -189,3 +190,34 @@ def apply_strategy_from_dashboard(
         )
 
     return RedirectResponse(url="/", status_code=303)
+
+
+@router.get("/metrics", response_class=HTMLResponse)
+def metrics_page(
+    request: Request,
+    period: int = 30,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_web_user),
+):
+    """Render the signal performance metrics page."""
+    if not user:
+        return RedirectResponse(url="/onboarding", status_code=303)
+
+    if not user.onboarding_completed_at:
+        return RedirectResponse(url=f"/onboarding?step={user.onboarding_step}", status_code=303)
+
+    # Get metrics summary
+    metrics_service = MetricsService(db)
+    summary = metrics_service.get_summary(user.id, period)
+
+    return templates.TemplateResponse(
+        "metrics.html",
+        {
+            "request": request,
+            "period": period,
+            "summary": summary,
+            "user_metrics": summary.user_metrics,
+            "rule_metrics": summary.rule_metrics,
+            "asset_metrics": summary.asset_metrics,
+        },
+    )

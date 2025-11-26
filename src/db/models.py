@@ -272,3 +272,50 @@ class LinkedBrokerAccount(Base):
 
     def __repr__(self) -> str:
         return f"<LinkedBrokerAccount(id={self.id}, broker={self.broker_type}, account={self.account_mask})>"
+
+
+class TelemetryEvent(Base):
+    """Telemetry event for product analytics."""
+
+    __tablename__ = "telemetry_events"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    event_type = Column(String(100), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
+    timestamp = Column(DateTime, default=utcnow, nullable=False, index=True)
+
+    # JSON columns for flexible event data
+    # SQLite doesn't have native JSON, so we store as Text and serialize
+    _properties = Column("properties", Text, nullable=True)
+    _event_metadata = Column("event_metadata", Text, nullable=True)
+
+    @property
+    def properties(self) -> dict:
+        """Get properties as dict."""
+        import json
+        if self._properties:
+            return json.loads(self._properties)
+        return {}
+
+    @properties.setter
+    def properties(self, value: dict):
+        """Set properties from dict."""
+        import json
+        self._properties = json.dumps(value) if value else None
+
+    @property
+    def event_meta(self) -> dict:
+        """Get event metadata as dict."""
+        import json
+        if self._event_metadata:
+            return json.loads(self._event_metadata)
+        return {}
+
+    @event_meta.setter
+    def event_meta(self, value: dict):
+        """Set event metadata from dict."""
+        import json
+        self._event_metadata = json.dumps(value) if value else None
+
+    def __repr__(self) -> str:
+        return f"<TelemetryEvent(id={self.id}, type={self.event_type}, user={self.user_id})>"

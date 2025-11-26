@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from src.db.database import init_db
-from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth, brokers, onboarding
+from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth, brokers, onboarding, metrics
 from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION, PRODUCT_DESCRIPTION
 
 app = FastAPI(
@@ -46,6 +46,7 @@ app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(monitor.router, prefix="/api/monitor", tags=["monitor"])
 app.include_router(strategies.router, prefix="/api", tags=["strategies"])
 app.include_router(brokers.router, prefix="/api", tags=["brokers"])
+app.include_router(metrics.router, prefix="/api", tags=["metrics"])
 
 # Mount onboarding flow (no prefix - serves at root)
 app.include_router(onboarding.router, tags=["onboarding"])

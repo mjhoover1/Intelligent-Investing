@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Signal Performance - Signal Sentinel{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-montserrat font-bold text-gray-900 dark:text-white">Signal Performance</h1>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Analyze which rules and assets generate the most useful signals</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/metrics?period=7" class="btn {% if period == 7 %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">7 days</a>
+            <a href="/metrics?period=30" class="btn {% if period == 30 %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">30 days</a>
+            <a href="/metrics?period=90" class="btn {% if period == 90 %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">90 days</a>
+        </div>
+    </div>
+
+    <!-- Summary Stats Cards -->
+    {% if user_metrics %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm card-hover">
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Alerts ({{ period }}d)</div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ user_metrics.alerts_last_30d }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user_metrics.total_alerts }} total</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm card-hover">
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Usefulness Rate</div>
+            <div class="text-2xl font-bold {% if user_metrics.feedback.usefulness_rate and user_metrics.feedback.usefulness_rate >= 50 %}text-green-600 dark:text-green-400{% elif user_metrics.feedback.usefulness_rate %}text-yellow-600 dark:text-yellow-400{% else %}text-gray-400{% endif %}">
+                {% if user_metrics.feedback.usefulness_rate %}{{ "%.0f"|format(user_metrics.feedback.usefulness_rate) }}%{% else %}-{% endif %}
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user_metrics.feedback.rated_count }} rated</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm card-hover">
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Rating Coverage</div>
+            <div class="text-2xl font-bold text-sentinel-indigo">{{ "%.0f"|format(user_metrics.feedback_rate) }}%</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">of alerts rated</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm card-hover">
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Active Rules</div>
+            <div class="text-2xl font-bold text-sentinel-teal">{{ user_metrics.active_rules }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">of {{ user_metrics.total_rules }} total</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Highlights -->
+    {% if summary.most_useful_rule or summary.noisiest_rule or summary.most_signals_asset %}
+    <div class="bg-gradient-to-r from-sentinel-indigo/10 to-sentinel-teal/10 dark:from-sentinel-indigo/20 dark:to-sentinel-teal/20 rounded-xl p-5 border border-sentinel-indigo/20">
+        <h2 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-sentinel-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            Insights
+        </h2>
+        <div class="grid md:grid-cols-3 gap-4 text-sm">
+            {% if summary.most_useful_rule %}
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-gray-600 dark:text-gray-400">Best rule:</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ summary.most_useful_rule }}</span>
+            </div>
+            {% endif %}
+            {% if summary.noisiest_rule %}
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-gray-600 dark:text-gray-400">Noisiest:</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ summary.noisiest_rule }}</span>
+            </div>
+            {% endif %}
+            {% if summary.most_signals_asset %}
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span class="text-gray-600 dark:text-gray-400">Most signals:</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ summary.most_signals_asset }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rule Performance Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Rule Performance</h2>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ rule_metrics|length }} rules</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rule</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alerts</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Useful</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Noise</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usefulness</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg/Week</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700/50">
+                    {% for r in rule_metrics %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="px-6 py-3 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                {% if r.enabled %}
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                {% else %}
+                                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                {% endif %}
+                                <span class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ r.rule_name }}</span>
+                            </div>
+                            {% if r.symbol %}
+                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-4">{{ r.symbol }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-center">
+                            <span class="px-2 py-1 text-xs rounded-full font-medium
+                                {% if 'rsi' in r.rule_type %}bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300
+                                {% elif 'below' in r.rule_type %}bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300
+                                {% else %}bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300{% endif %}">
+                                {{ r.rule_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-300">
+                            {{ r.total_alerts }}
+                            <span class="text-xs text-gray-400">({{ r.alerts_last_30d }} recent)</span>
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400 font-medium">
+                            {{ r.feedback.useful + r.feedback.actionable }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400 font-medium">
+                            {{ r.feedback.noise }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right">
+                            {% if r.feedback.usefulness_rate is not none %}
+                            <span class="px-2 py-1 text-xs rounded-full font-medium
+                                {% if r.feedback.usefulness_rate >= 70 %}bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300
+                                {% elif r.feedback.usefulness_rate >= 40 %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300
+                                {% else %}bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300{% endif %}">
+                                {{ "%.0f"|format(r.feedback.usefulness_rate) }}%
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-300">
+                            {{ "%.1f"|format(r.avg_fires_per_week) }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <p>No rules configured yet</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Asset Performance Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Asset Signal Performance</h2>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ asset_metrics|length }} assets with signals</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Alerts</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last 30d</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Useful</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Noise</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usefulness</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rule Types</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700/50">
+                    {% for a in asset_metrics %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="px-6 py-3 whitespace-nowrap">
+                            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ a.symbol }}</span>
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-300">
+                            {{ a.total_alerts }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-300">
+                            {{ a.alerts_last_30d }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400 font-medium">
+                            {{ a.feedback.useful + a.feedback.actionable }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400 font-medium">
+                            {{ a.feedback.noise }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right">
+                            {% if a.feedback.usefulness_rate is not none %}
+                            <span class="px-2 py-1 text-xs rounded-full font-medium
+                                {% if a.feedback.usefulness_rate >= 70 %}bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300
+                                {% elif a.feedback.usefulness_rate >= 40 %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300
+                                {% else %}bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300{% endif %}">
+                                {{ "%.0f"|format(a.feedback.usefulness_rate) }}%
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap">
+                            <div class="flex flex-wrap gap-1">
+                                {% for rule_type, count in a.alerts_by_rule_type.items() %}
+                                <span class="px-1.5 py-0.5 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                    {{ rule_type|truncate(12, True, '..') }}: {{ count }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <p>No signals generated yet. Run the monitor to start generating alerts.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Feedback Breakdown -->
+    {% if user_metrics and user_metrics.feedback.total > 0 %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Feedback Breakdown</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Visual breakdown -->
+            <div>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="flex-1 h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+                        {% set total = user_metrics.feedback.rated_count or 1 %}
+                        <div class="h-full bg-green-500" style="width: {{ (user_metrics.feedback.useful / total * 100)|round }}%"></div>
+                        <div class="h-full bg-blue-500" style="width: {{ (user_metrics.feedback.actionable / total * 100)|round }}%"></div>
+                        <div class="h-full bg-red-500" style="width: {{ (user_metrics.feedback.noise / total * 100)|round }}%"></div>
+                    </div>
+                </div>
+                <div class="flex gap-4 text-sm">
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded bg-green-500"></span>
+                        <span class="text-gray-600 dark:text-gray-400">Useful ({{ user_metrics.feedback.useful }})</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded bg-blue-500"></span>
+                        <span class="text-gray-600 dark:text-gray-400">Actionable ({{ user_metrics.feedback.actionable }})</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded bg-red-500"></span>
+                        <span class="text-gray-600 dark:text-gray-400">Noise ({{ user_metrics.feedback.noise }})</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ user_metrics.feedback.total }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Total Alerts</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ user_metrics.feedback.rated_count }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Rated</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ user_metrics.feedback.unrated }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Unrated</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div class="text-2xl font-bold {% if user_metrics.feedback_rate >= 50 %}text-green-600{% else %}text-yellow-600{% endif %}">{{ "%.0f"|format(user_metrics.feedback_rate) }}%</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Coverage</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pro tip -->
+    <div class="alert alert-info">
+        <svg class="alert-icon" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+            <strong>Pro tip:</strong> Rate your alerts to improve signal quality metrics.
+            Use <code class="bg-gray-200 dark:bg-gray-600 px-1 rounded">invest alerts rate ALERT_ID useful|noise|actionable</code> from CLI.
+        </div>
+    </div>
+</div>
+{% endblock %}
