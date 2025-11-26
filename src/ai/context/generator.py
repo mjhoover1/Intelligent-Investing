@@ -96,7 +96,7 @@ class OpenAIContextGenerator(ContextGenerator):
             return None
 
         try:
-            # Build the prompt
+            # Build the prompt with enriched context
             prompt = build_alert_prompt(
                 symbol=data.symbol,
                 rule_name=data.rule_name,
@@ -106,6 +106,10 @@ class OpenAIContextGenerator(ContextGenerator):
                 message=data.message,
                 cost_basis=data.cost_basis,
                 percent_change=data.percent_change,
+                rsi=data.rsi,
+                indicator_value=data.indicator_value,
+                high_52_week=data.high_52_week,
+                low_52_week=data.low_52_week,
             )
 
             # Call OpenAI

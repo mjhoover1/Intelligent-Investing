@@ -9,6 +9,8 @@ from src.core.rules.evaluators import (
     PriceAboveCostPctEvaluator,
     PriceBelowValueEvaluator,
     PriceAboveValueEvaluator,
+    RSIBelowValueEvaluator,
+    RSIAboveValueEvaluator,
 )
 
 
@@ -134,6 +136,100 @@ class TestPriceAboveValueEvaluator:
         ) is False
 
 
+class TestRSIBelowValueEvaluator:
+    """Tests for rsi_below_value rule type (oversold signal)."""
+
+    def test_triggers_when_rsi_below_threshold(self):
+        """Should trigger when RSI is below threshold."""
+        evaluator = RSIBelowValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=50.0,
+            cost_basis=100.0,
+            threshold=30.0,  # Alert when RSI < 30
+            indicator_value=25.0,  # RSI at 25 (oversold)
+        ) is True
+
+    def test_does_not_trigger_when_rsi_above_threshold(self):
+        """Should not trigger when RSI is above threshold."""
+        evaluator = RSIBelowValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=50.0,
+            cost_basis=100.0,
+            threshold=30.0,
+            indicator_value=45.0,  # RSI at 45 (normal)
+        ) is False
+
+    def test_does_not_trigger_when_no_indicator_value(self):
+        """Should not trigger when indicator value is None."""
+        evaluator = RSIBelowValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=50.0,
+            cost_basis=100.0,
+            threshold=30.0,
+            indicator_value=None,
+        ) is False
+
+    def test_format_reason(self):
+        """Should format reason correctly with oversold zone."""
+        evaluator = RSIBelowValueEvaluator()
+        reason = evaluator.format_reason(
+            current_price=50.0,
+            cost_basis=100.0,
+            threshold=30.0,
+            indicator_value=25.0,
+        )
+        assert "RSI 25.0" in reason
+        assert "oversold" in reason
+        assert "$50.00" in reason
+
+
+class TestRSIAboveValueEvaluator:
+    """Tests for rsi_above_value rule type (overbought signal)."""
+
+    def test_triggers_when_rsi_above_threshold(self):
+        """Should trigger when RSI is above threshold."""
+        evaluator = RSIAboveValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=150.0,
+            cost_basis=100.0,
+            threshold=70.0,  # Alert when RSI > 70
+            indicator_value=75.0,  # RSI at 75 (overbought)
+        ) is True
+
+    def test_does_not_trigger_when_rsi_below_threshold(self):
+        """Should not trigger when RSI is below threshold."""
+        evaluator = RSIAboveValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=150.0,
+            cost_basis=100.0,
+            threshold=70.0,
+            indicator_value=55.0,  # RSI at 55 (normal)
+        ) is False
+
+    def test_does_not_trigger_when_no_indicator_value(self):
+        """Should not trigger when indicator value is None."""
+        evaluator = RSIAboveValueEvaluator()
+        assert evaluator.evaluate(
+            current_price=150.0,
+            cost_basis=100.0,
+            threshold=70.0,
+            indicator_value=None,
+        ) is False
+
+    def test_format_reason(self):
+        """Should format reason correctly with overbought zone."""
+        evaluator = RSIAboveValueEvaluator()
+        reason = evaluator.format_reason(
+            current_price=150.0,
+            cost_basis=100.0,
+            threshold=70.0,
+            indicator_value=75.0,
+        )
+        assert "RSI 75.0" in reason
+        assert "overbought" in reason
+        assert "$150.00" in reason
+
+
 class TestGetEvaluator:
     """Tests for get_evaluator factory function."""
 
@@ -154,4 +250,12 @@ class TestGetEvaluator:
         assert isinstance(
             get_evaluator(RuleType.PRICE_ABOVE_VALUE),
             PriceAboveValueEvaluator,
+        )
+        assert isinstance(
+            get_evaluator(RuleType.RSI_BELOW_VALUE),
+            RSIBelowValueEvaluator,
+        )
+        assert isinstance(
+            get_evaluator(RuleType.RSI_ABOVE_VALUE),
+            RSIAboveValueEvaluator,
         )

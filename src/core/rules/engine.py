@@ -91,6 +91,11 @@ class RuleEngine:
             if evaluator is None:
                 continue
 
+            # Check if this is an indicator-based rule
+            rule_type_enum = RuleType(rule.rule_type)
+            is_indicator_rule = rule_type_enum.is_indicator_rule
+            indicator_type = rule_type_enum.indicator_type
+
             for symbol in target_symbols:
                 symbol_holdings = holdings_by_symbol.get(symbol, [])
                 if not symbol_holdings:
@@ -103,11 +108,22 @@ class RuleEngine:
                 # Use first holding's cost basis (could average if multiple)
                 holding = symbol_holdings[0]
 
+                # Fetch indicator value if needed
+                indicator_value = None
+                if is_indicator_rule and indicator_type:
+                    indicator_value = self.market_provider.get_indicator(
+                        symbol, indicator_type, db
+                    )
+                    if indicator_value is None:
+                        logger.debug(f"Skipping {symbol}: no {indicator_type} data")
+                        continue
+
                 # Evaluate the condition
                 triggered = evaluator.evaluate(
                     current_price=current_price,
                     cost_basis=holding.cost_basis,
                     threshold=rule.threshold,
+                    indicator_value=indicator_value,
                 )
 
                 if triggered:
@@ -115,13 +131,14 @@ class RuleEngine:
                         current_price=current_price,
                         cost_basis=holding.cost_basis,
                         threshold=rule.threshold,
+                        indicator_value=indicator_value,
                     )
 
                     results.append(
                         EvaluationResult(
                             rule_id=rule.id,
                             rule_name=rule.name,
-                            rule_type=RuleType(rule.rule_type),
+                            rule_type=rule_type_enum,
                             symbol=symbol,
                             triggered=True,
                             reason=reason,
@@ -129,6 +146,7 @@ class RuleEngine:
                             cost_basis=holding.cost_basis,
                             threshold=rule.threshold,
                             holding_id=holding.id,
+                            indicator_value=indicator_value,
                         )
                     )
 
@@ -172,9 +190,14 @@ class RuleEngine:
         # Fetch prices
         prices = self.market_provider.get_prices(target_symbols, db)
 
-        evaluator = get_evaluator(RuleType(rule.rule_type))
+        rule_type_enum = RuleType(rule.rule_type)
+        evaluator = get_evaluator(rule_type_enum)
         if evaluator is None:
             return []
+
+        # Check if this is an indicator-based rule
+        is_indicator_rule = rule_type_enum.is_indicator_rule
+        indicator_type = rule_type_enum.indicator_type
 
         results: List[EvaluationResult] = []
 
@@ -189,10 +212,20 @@ class RuleEngine:
 
             holding = symbol_holdings[0]
 
+            # Fetch indicator value if needed
+            indicator_value = None
+            if is_indicator_rule and indicator_type:
+                indicator_value = self.market_provider.get_indicator(
+                    symbol, indicator_type, db
+                )
+                if indicator_value is None:
+                    continue
+
             triggered = evaluator.evaluate(
                 current_price=current_price,
                 cost_basis=holding.cost_basis,
                 threshold=rule.threshold,
+                indicator_value=indicator_value,
             )
 
             if triggered:
@@ -200,13 +233,14 @@ class RuleEngine:
                     current_price=current_price,
                     cost_basis=holding.cost_basis,
                     threshold=rule.threshold,
+                    indicator_value=indicator_value,
                 )
 
                 results.append(
                     EvaluationResult(
                         rule_id=rule.id,
                         rule_name=rule.name,
-                        rule_type=RuleType(rule.rule_type),
+                        rule_type=rule_type_enum,
                         symbol=symbol,
                         triggered=True,
                         reason=reason,
@@ -214,6 +248,7 @@ class RuleEngine:
                         cost_basis=holding.cost_basis,
                         threshold=rule.threshold,
                         holding_id=holding.id,
+                        indicator_value=indicator_value,
                     )
                 )
 

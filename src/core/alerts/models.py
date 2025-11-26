@@ -56,3 +56,25 @@ class AlertContextData(BaseModel):
     cost_basis: Optional[float] = None
     percent_change: Optional[float] = None
     message: str
+
+    # Technical indicators
+    rsi: Optional[float] = None
+    indicator_value: Optional[float] = None  # For indicator-based rules
+
+    # 52-week data
+    high_52_week: Optional[float] = None
+    low_52_week: Optional[float] = None
+
+    @property
+    def pct_from_52_week_high(self) -> Optional[float]:
+        """Calculate percent below 52-week high."""
+        if self.high_52_week and self.current_price:
+            return ((self.current_price - self.high_52_week) / self.high_52_week) * 100
+        return None
+
+    @property
+    def pct_from_52_week_low(self) -> Optional[float]:
+        """Calculate percent above 52-week low."""
+        if self.low_52_week and self.current_price:
+            return ((self.current_price - self.low_52_week) / self.low_52_week) * 100
+        return None

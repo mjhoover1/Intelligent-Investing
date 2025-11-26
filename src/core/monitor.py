@@ -72,12 +72,13 @@ class MonitorService:
         if self.use_ai:
             context_generator = get_context_generator()
 
-        # Create alert service
+        # Create alert service with market provider for enriched context
         service = AlertService(
             db=db,
             notifier=console_notifier,
             context_generator=context_generator,
             generate_ai_context=self.use_ai,
+            market_provider=self.market_provider,
         )
 
         # Process results into alerts

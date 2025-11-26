@@ -134,3 +134,33 @@ class PriceCache(Base):
 
     def __repr__(self) -> str:
         return f"<PriceCache(symbol={self.symbol}, price={self.price})>"
+
+
+class IndicatorCache(Base):
+    """Technical indicator cache model."""
+
+    __tablename__ = "indicator_cache"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    symbol = Column(String(10), nullable=False, index=True)
+    indicator_type = Column(String(20), nullable=False)  # 'rsi', 'macd', etc.
+    timeframe = Column(String(10), nullable=False, default="1d")  # '1d', '1h', etc.
+    value = Column(Float, nullable=False)
+    fetched_at = Column(DateTime, nullable=False, default=utcnow)
+
+    def __repr__(self) -> str:
+        return f"<IndicatorCache(symbol={self.symbol}, type={self.indicator_type}, value={self.value})>"
+
+
+class MarketDataCache(Base):
+    """Extended market data cache (52-week high/low, etc.)."""
+
+    __tablename__ = "market_data_cache"
+
+    symbol = Column(String(10), primary_key=True)
+    high_52_week = Column(Float, nullable=True)
+    low_52_week = Column(Float, nullable=True)
+    fetched_at = Column(DateTime, nullable=False, default=utcnow)
+
+    def __repr__(self) -> str:
+        return f"<MarketDataCache(symbol={self.symbol}, 52wk_high={self.high_52_week})>"

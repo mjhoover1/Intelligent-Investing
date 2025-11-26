@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 
@@ -15,6 +16,9 @@ from .models import AlertContextData
 
 if TYPE_CHECKING:
     from src.ai.context.generator import ContextGenerator
+    from src.data.market.provider import MarketDataProvider
+
+logger = logging.getLogger(__name__)
 
 
 class AlertService:
@@ -26,6 +30,7 @@ class AlertService:
         notifier: Optional[BaseNotifier] = None,
         context_generator: Optional["ContextGenerator"] = None,
         generate_ai_context: bool = True,
+        market_provider: Optional["MarketDataProvider"] = None,
     ):
         """Initialize the alert service.
 
@@ -34,12 +39,14 @@ class AlertService:
             notifier: Notifier to use (defaults to console)
             context_generator: AI context generator (optional)
             generate_ai_context: Whether to generate AI summaries
+            market_provider: Market data provider for RSI/52wk data
         """
         self.db = db
         self.repo = AlertRepository(db)
         self.notifier = notifier or console_notifier
         self.context_generator = context_generator
         self.generate_ai_context = generate_ai_context
+        self.market_provider = market_provider
 
     def process_evaluation_results(
         self,
@@ -139,6 +146,24 @@ class AlertService:
                     (result.current_price - result.cost_basis) / result.cost_basis * 100
                 )
 
+            # Fetch enriched market data if provider is available
+            rsi = None
+            high_52_week = None
+            low_52_week = None
+
+            if self.market_provider:
+                try:
+                    # Get RSI (always useful context)
+                    rsi = self.market_provider.get_rsi(result.symbol, self.db)
+
+                    # Get 52-week data
+                    week_data = self.market_provider.get_52_week_data(result.symbol, self.db)
+                    if week_data:
+                        high_52_week, low_52_week = week_data
+
+                except Exception as e:
+                    logger.debug(f"Failed to fetch enriched data for {result.symbol}: {e}")
+
             context_data = AlertContextData(
                 symbol=result.symbol,
                 rule_name=result.rule_name,
@@ -148,11 +173,16 @@ class AlertService:
                 cost_basis=result.cost_basis,
                 percent_change=percent_change,
                 message=result.reason,
+                rsi=rsi,
+                indicator_value=result.indicator_value,
+                high_52_week=high_52_week,
+                low_52_week=low_52_week,
             )
 
             return self.context_generator.generate(context_data)
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Context generation failed: {e}")
             # Don't fail alert creation if AI fails
             return None
 

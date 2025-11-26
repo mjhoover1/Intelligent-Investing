@@ -12,10 +12,15 @@ from pydantic import BaseModel, Field
 class RuleType(str, Enum):
     """Supported rule condition types."""
 
+    # Price-based rules
     PRICE_BELOW_COST_PCT = "price_below_cost_pct"
     PRICE_ABOVE_COST_PCT = "price_above_cost_pct"
     PRICE_BELOW_VALUE = "price_below_value"
     PRICE_ABOVE_VALUE = "price_above_value"
+
+    # RSI indicator rules
+    RSI_BELOW_VALUE = "rsi_below_value"  # Oversold signal (e.g., RSI < 30)
+    RSI_ABOVE_VALUE = "rsi_above_value"  # Overbought signal (e.g., RSI > 70)
 
     def description(self) -> str:
         """Human-readable description of the rule type."""
@@ -24,8 +29,22 @@ class RuleType(str, Enum):
             self.PRICE_ABOVE_COST_PCT: "Alert if price rises X% above cost basis",
             self.PRICE_BELOW_VALUE: "Alert if price drops below $X",
             self.PRICE_ABOVE_VALUE: "Alert if price rises above $X",
+            self.RSI_BELOW_VALUE: "Alert if RSI drops below X (oversold signal)",
+            self.RSI_ABOVE_VALUE: "Alert if RSI rises above X (overbought signal)",
         }
         return descriptions.get(self, "Unknown rule type")
+
+    @property
+    def is_indicator_rule(self) -> bool:
+        """Check if this rule type requires indicator data."""
+        return self in (self.RSI_BELOW_VALUE, self.RSI_ABOVE_VALUE)
+
+    @property
+    def indicator_type(self) -> Optional[str]:
+        """Get the indicator type for this rule, if applicable."""
+        if self in (self.RSI_BELOW_VALUE, self.RSI_ABOVE_VALUE):
+            return "rsi"
+        return None
 
 
 class RuleCreate(BaseModel):
@@ -80,3 +99,4 @@ class EvaluationResult(BaseModel):
     cost_basis: Optional[float] = None
     threshold: float
     holding_id: Optional[str] = None
+    indicator_value: Optional[float] = None  # For indicator-based rules
