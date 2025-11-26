@@ -250,7 +250,7 @@ def test_notification(
         alert = service.create_test_alert(
             user_id=user.id,
             symbol="TEST",
-            message="This is a test alert from Intelligent Investing",
+            message="This is a test alert from Signal Sentinel",
             notify=True,
         )
 

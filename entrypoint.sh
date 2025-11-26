@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-# Intelligent Investing - Container Entrypoint
+# Signal Sentinel - Container Entrypoint
 # Usage: ./entrypoint.sh [web|worker|both|cli]
 
 MODE="${1:-web}"
 
-echo "Starting Intelligent Investing in ${MODE} mode..."
+echo "Starting Signal Sentinel in ${MODE} mode..."
 
 # Initialize database
 python -c "from src.db.database import init_db; init_db()"

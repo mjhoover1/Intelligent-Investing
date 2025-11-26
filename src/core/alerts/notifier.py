@@ -185,7 +185,7 @@ class TelegramNotifier(BaseNotifier):
                 self.TELEGRAM_API_URL.format(token=self.bot_token),
                 json={
                     "chat_id": self.chat_id,
-                    "text": "Intelligent Investing bot connected successfully!",
+                    "text": "Signal Sentinel bot connected successfully!",
                 },
                 timeout=10,
             )

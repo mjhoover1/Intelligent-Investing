@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Database
-    database_url: str = "sqlite:///./intelligent_investing.db"
+    database_url: str = "sqlite:///./signal_sentinel.db"
 
     # OpenAI
     openai_api_key: str = ""

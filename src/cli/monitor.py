@@ -50,7 +50,7 @@ def start_daemon(
 
     effective_interval = interval or settings.monitor_interval_seconds
 
-    console.print("[bold]Starting Intelligent Investing Monitor[/bold]")
+    console.print("[bold]Starting Signal Sentinel Monitor[/bold]")
     console.print(f"  Interval: {effective_interval} seconds")
     console.print(f"  AI Context: {'enabled' if with_ai else 'disabled'}")
     console.print(f"  Cooldown: {'ignored' if ignore_cooldown else 'enabled'}")

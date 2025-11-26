@@ -1,4 +1,4 @@
-# Intelligent Investing - AI Portfolio Copilot
+# Signal Sentinel - Your AI-powered market watchdog
 # Multi-stage build for smaller final image
 
 FROM python:3.11-slim as builder
@@ -46,7 +46,7 @@ RUN mkdir -p /app/data
 # Environment variables (override in docker-compose or runtime)
 ENV PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
-    DATABASE_URL=sqlite:///./data/intelligent_investing.db \
+    DATABASE_URL=sqlite:///./data/signal_sentinel.db \
     LOG_LEVEL=INFO \
     MONITOR_INTERVAL_SECONDS=300
 

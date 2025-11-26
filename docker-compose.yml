@@ -1,4 +1,4 @@
-# Intelligent Investing - Docker Compose Configuration
+# Signal Sentinel - Docker Compose Configuration
 # Usage: docker compose up -d
 
 version: "3.8"
@@ -7,14 +7,14 @@ services:
   # API Server
   web:
     build: .
-    container_name: intelligent-investing-web
+    container_name: signal-sentinel-web
     command: web
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+      - DATABASE_URL=sqlite:///./data/signal_sentinel.db
     volumes:
       - ./data:/app/data
     restart: unless-stopped
@@ -28,12 +28,12 @@ services:
   # Monitor Worker (runs evaluation cycles)
   worker:
     build: .
-    container_name: intelligent-investing-worker
+    container_name: signal-sentinel-worker
     command: worker
     env_file:
       - .env
     environment:
-      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+      - DATABASE_URL=sqlite:///./data/signal_sentinel.db
     volumes:
       - ./data:/app/data
     restart: unless-stopped

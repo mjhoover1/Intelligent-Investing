@@ -1,60 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Intelligent Investing{% endblock %}
+{% block title %}Dashboard - Signal Sentinel{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
     <!-- Portfolio Summary -->
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Portfolio Summary</h2>
-            <span class="text-sm text-gray-500">{{ holdings|length }} holdings{% if holdings_no_price %} ({{ holdings_no_price|length }} hidden - no price data){% endif %}</span>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Portfolio Summary</h2>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ holdings|length }} holdings{% if holdings_no_price %} ({{ holdings_no_price|length }} hidden - no price data){% endif %}</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-gray-50 rounded p-4">
-                <div class="text-sm text-gray-500">Total Value</div>
-                <div class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(total_value) }}</div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Total Value</div>
+                <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">${{ "%.2f"|format(total_value) }}</div>
             </div>
-            <div class="bg-gray-50 rounded p-4">
-                <div class="text-sm text-gray-500">Total Cost</div>
-                <div class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(total_cost) }}</div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Total Cost</div>
+                <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">${{ "%.2f"|format(total_cost) }}</div>
             </div>
-            <div class="bg-gray-50 rounded p-4">
-                <div class="text-sm text-gray-500">Total P&L</div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Total P&L</div>
                 <div class="text-2xl font-bold {% if total_pnl >= 0 %}gain{% else %}loss{% endif %}">
                     {{ "%+.2f"|format(total_pnl) }} ({{ "%+.1f"|format(total_pnl_pct) }}%)
                 </div>
             </div>
-            <div class="bg-gray-50 rounded p-4">
-                <div class="text-sm text-gray-500">Active Rules</div>
-                <div class="text-2xl font-bold text-gray-800">{{ rules|selectattr('enabled')|list|length }}</div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Active Rules</div>
+                <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ rules|selectattr('enabled')|list|length }}</div>
             </div>
         </div>
     </div>
 
     <!-- Strategy Presets -->
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Strategy Presets</h2>
-            <span class="text-sm text-gray-500">One-click rule bundles</span>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Strategy Presets</h2>
+            <span class="text-sm text-gray-500 dark:text-gray-400">One-click rule bundles</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {% for strategy in strategies %}
-            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="border dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-700">
                 <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-semibold text-gray-800">{{ strategy.name }}</h3>
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-100">{{ strategy.name }}</h3>
                     <span class="px-2 py-1 text-xs rounded-full
-                        {% if strategy.risk_level == 'conservative' %}bg-green-100 text-green-800
-                        {% elif strategy.risk_level == 'medium' %}bg-yellow-100 text-yellow-800
-                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if strategy.risk_level == 'conservative' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                        {% elif strategy.risk_level == 'medium' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                        {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
                         {{ strategy.risk_level }}
                     </span>
                 </div>
-                <p class="text-sm text-gray-600 mb-3">{{ strategy.description[:80] }}{% if strategy.description|length > 80 %}...{% endif %}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">{{ strategy.description[:80] }}{% if strategy.description|length > 80 %}...{% endif %}</p>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-500">{{ strategy.rules|length }} rules</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ strategy.rules|length }} rules</span>
                     {% if strategy.id in active_strategies %}
-                    <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
+                    <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
                     {% else %}
                     <form method="POST" action="/strategies/{{ strategy.id }}/apply" class="inline">
                         <button type="submit" class="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
@@ -69,35 +69,35 @@
     </div>
 
     <!-- Holdings Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Holdings</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Holdings</h2>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Basis</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Market Value</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P&L</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P&L %</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Shares</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cost Basis</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Current Price</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market Value</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">P&L</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">P&L %</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for h in holdings %}
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-medium text-gray-900">{{ h.symbol }}</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ h.symbol }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">{{ "%.2f"|format(h.shares) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">${{ "%.2f"|format(h.cost_basis) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">{{ "%.2f"|format(h.shares) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">${{ "%.2f"|format(h.cost_basis) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">
                             {% if h.current_price %}${{ "%.2f"|format(h.current_price) }}{% else %}-{% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">
                             {% if h.market_value %}${{ "%.2f"|format(h.market_value) }}{% else %}-{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right {% if h.pnl and h.pnl >= 0 %}gain{% elif h.pnl %}loss{% else %}neutral{% endif %}">
@@ -109,7 +109,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No holdings found</td>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No holdings found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -118,58 +118,58 @@
     </div>
 
     <!-- Rules Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Rules</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Rules</h2>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Threshold</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cooldown</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Threshold</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cooldown</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for r in rules %}
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-medium text-gray-900">{{ r.name }}</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ r.name }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs rounded-full
-                                {% if 'rsi' in r.rule_type %}bg-purple-100 text-purple-800
-                                {% elif 'below' in r.rule_type %}bg-red-100 text-red-800
-                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {% if 'rsi' in r.rule_type %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                                {% elif 'below' in r.rule_type %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                {% else %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
                                 {{ r.rule_type }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
                             {{ r.symbol or 'All' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">
                             {% if 'pct' in r.rule_type %}{{ r.threshold }}%
                             {% elif 'rsi' in r.rule_type %}{{ r.threshold }}
                             {% else %}${{ "%.2f"|format(r.threshold) }}{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             {% if r.enabled %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</span>
                             {% else %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Disabled</span>
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">Disabled</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600 dark:text-gray-300">
                             {{ r.cooldown_minutes }}m
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No rules configured</td>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No rules configured</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -178,47 +178,47 @@
     </div>
 
     <!-- Recent Alerts Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-800">Recent Alerts</h2>
-            <span class="text-sm text-gray-500">Last 20 alerts</span>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Recent Alerts</h2>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Last 20 alerts</span>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Summary</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Message</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">AI Summary</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for a in alerts %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ a.triggered_at.strftime('%Y-%m-%d %H:%M') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-medium text-gray-900">{{ a.symbol }}</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ a.symbol }}</span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 max-w-md truncate">
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-md truncate">
                             {{ a.message }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 max-w-sm">
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-sm">
                             {% if a.ai_summary %}
                             <details class="cursor-pointer">
-                                <summary class="text-indigo-600 hover:text-indigo-800">View AI context</summary>
-                                <p class="mt-2 text-gray-600 whitespace-pre-wrap">{{ a.ai_summary }}</p>
+                                <summary class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">View AI context</summary>
+                                <p class="mt-2 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ a.ai_summary }}</p>
                             </details>
                             {% else %}
-                            <span class="text-gray-400">-</span>
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">No alerts yet</td>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No alerts yet</td>
                     </tr>
                     {% endfor %}
                 </tbody>

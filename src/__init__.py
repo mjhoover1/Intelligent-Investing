@@ -1,1 +1,1 @@
-# Intelligent Investing - AI Portfolio Copilot
+# Signal Sentinel - Your AI-powered market watchdog

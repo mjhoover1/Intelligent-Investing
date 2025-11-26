@@ -1,1 +1,1 @@
-"""CLI module for Intelligent Investing."""
+"""CLI module for Signal Sentinel."""

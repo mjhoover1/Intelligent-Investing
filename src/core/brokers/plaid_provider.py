@@ -118,7 +118,7 @@ class PlaidProvider(BrokerProvider):
 
             request = LinkTokenCreateRequest(
                 products=[Products("investments")],
-                client_name="Intelligent Investing",
+                client_name="Signal Sentinel",
                 country_codes=[CountryCode("US")],
                 language="en",
                 user=LinkTokenCreateRequestUser(client_user_id=user_id),

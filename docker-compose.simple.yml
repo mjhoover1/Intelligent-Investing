@@ -1,4 +1,4 @@
-# Intelligent Investing - Simple Single-Container Deployment
+# Signal Sentinel - Simple Single-Container Deployment
 # Usage: docker compose -f docker-compose.simple.yml up -d
 #
 # This runs both the API server and monitor worker in one container.
@@ -9,14 +9,14 @@ version: "3.8"
 services:
   app:
     build: .
-    container_name: intelligent-investing
+    container_name: signal-sentinel
     command: both
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - DATABASE_URL=sqlite:///./data/intelligent_investing.db
+      - DATABASE_URL=sqlite:///./data/signal_sentinel.db
       - MONITOR_INTERVAL_SECONDS=300
     volumes:
       - ./data:/app/data
