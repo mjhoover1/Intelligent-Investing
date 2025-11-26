@@ -61,11 +61,18 @@ def add_rule(
 def get_rule(
     rule_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Get a specific rule by ID."""
     repo = RuleRepository(db)
     rule = repo.get_by_id(rule_id)
     if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule {rule_id} not found",
+        )
+    # Verify ownership
+    if rule.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule {rule_id} not found",
@@ -78,6 +85,7 @@ def update_rule(
     rule_id: str,
     payload: RuleUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Update a rule."""
     repo = RuleRepository(db)
@@ -87,10 +95,16 @@ def update_rule(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule {rule_id} not found",
         )
+    # Verify ownership
+    if rule.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule {rule_id} not found",
+        )
 
     # Check for name conflict
     if payload.name and payload.name != rule.name:
-        existing = repo.get_by_name(payload.name, user_id=rule.user_id)
+        existing = repo.get_by_name(payload.name, user_id=user.id)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -112,44 +126,53 @@ def update_rule(
 def delete_rule(
     rule_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Delete a rule by ID."""
     repo = RuleRepository(db)
-    deleted = repo.delete(rule_id)
-    if not deleted:
+    # Verify ownership before deletion
+    rule = repo.get_by_id(rule_id)
+    if not rule or rule.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule {rule_id} not found",
         )
+    repo.delete(rule_id)
 
 
 @router.post("/{rule_id}/enable", response_model=RuleResponse)
 def enable_rule(
     rule_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Enable a rule."""
     repo = RuleRepository(db)
-    rule = repo.update(rule_id, enabled=True)
-    if not rule:
+    # Verify ownership
+    rule = repo.get_by_id(rule_id)
+    if not rule or rule.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule {rule_id} not found",
         )
-    return rule
+    updated = repo.update(rule_id, enabled=True)
+    return updated
 
 
 @router.post("/{rule_id}/disable", response_model=RuleResponse)
 def disable_rule(
     rule_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Disable a rule."""
     repo = RuleRepository(db)
-    rule = repo.update(rule_id, enabled=False)
-    if not rule:
+    # Verify ownership
+    rule = repo.get_by_id(rule_id)
+    if not rule or rule.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule {rule_id} not found",
         )
-    return rule
+    updated = repo.update(rule_id, enabled=False)
+    return updated

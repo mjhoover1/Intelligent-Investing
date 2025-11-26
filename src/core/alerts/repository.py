@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
+
+
+def _utcnow() -> datetime:
+    """Get current UTC time as naive datetime for database compatibility."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 from src.db.models import Alert, Rule, User
 from src.config import get_settings
@@ -58,15 +63,26 @@ class AlertRepository:
             symbol=symbol.upper(),
             message=message,
             ai_summary=ai_summary,
-            triggered_at=datetime.utcnow(),
+            triggered_at=_utcnow(),
         )
         self.db.add(alert)
         self.db.flush()
         return alert
 
-    def get_by_id(self, alert_id: str) -> Optional[Alert]:
-        """Get an alert by ID."""
-        return self.db.query(Alert).filter_by(id=alert_id).first()
+    def get_by_id(self, alert_id: str, user_id: Optional[str] = None) -> Optional[Alert]:
+        """Get an alert by ID.
+
+        Args:
+            alert_id: Alert ID
+            user_id: Optional user ID for ownership verification
+
+        Returns:
+            Alert if found (and owned by user if user_id provided), None otherwise
+        """
+        query = self.db.query(Alert).filter_by(id=alert_id)
+        if user_id is not None:
+            query = query.filter_by(user_id=user_id)
+        return query.first()
 
     def get_recent(
         self,
@@ -126,20 +142,26 @@ class AlertRepository:
     def get_by_rule(
         self,
         rule_id: str,
+        user_id: Optional[str] = None,
         limit: int = 20,
     ) -> List[Alert]:
         """Get alerts for a specific rule.
 
         Args:
             rule_id: Rule ID
+            user_id: User ID. If None, uses default user.
             limit: Maximum number of alerts
 
         Returns:
             List of alerts for the rule
         """
+        if user_id is None:
+            user = self._get_or_create_default_user()
+            user_id = user.id
+
         return (
             self.db.query(Alert)
-            .filter_by(rule_id=rule_id)
+            .filter_by(rule_id=rule_id, user_id=user_id)
             .order_by(Alert.triggered_at.desc())
             .limit(limit)
             .all()
@@ -159,6 +181,7 @@ class AlertRepository:
             return False
 
         alert.notified = True
+        self.db.flush()
         return True
 
     def update_ai_summary(self, alert_id: str, ai_summary: str) -> bool:
@@ -176,6 +199,7 @@ class AlertRepository:
             return False
 
         alert.ai_summary = ai_summary
+        self.db.flush()
         return True
 
     def delete(self, alert_id: str) -> bool:
@@ -192,6 +216,7 @@ class AlertRepository:
             return False
 
         self.db.delete(alert)
+        self.db.flush()
         return True
 
     def clear_all(self, user_id: Optional[str] = None) -> int:
@@ -208,4 +233,5 @@ class AlertRepository:
             user_id = user.id
 
         count = self.db.query(Alert).filter_by(user_id=user_id).delete()
+        self.db.flush()
         return count

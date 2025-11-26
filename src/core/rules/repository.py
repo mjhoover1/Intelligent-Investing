@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
+
+
+def _utcnow() -> datetime:
+    """Get current UTC time as naive datetime for database compatibility."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 from src.db.models import Rule, User
 from src.config import get_settings
@@ -158,6 +164,7 @@ class RuleRepository:
         if cooldown_minutes is not None:
             rule.cooldown_minutes = cooldown_minutes
 
+        self.db.flush()
         return rule
 
     def delete(self, rule_id: str) -> bool:
@@ -174,6 +181,7 @@ class RuleRepository:
             return False
 
         self.db.delete(rule)
+        self.db.flush()
         return True
 
     def delete_by_name(self, name: str, user_id: Optional[str] = None) -> bool:
@@ -191,6 +199,7 @@ class RuleRepository:
             return False
 
         self.db.delete(rule)
+        self.db.flush()
         return True
 
     def update_last_triggered(self, rule_id: str) -> None:
@@ -199,8 +208,7 @@ class RuleRepository:
         Args:
             rule_id: Rule ID
         """
-        from datetime import datetime
-
         rule = self.get_by_id(rule_id)
         if rule:
-            rule.last_triggered_at = datetime.utcnow()
+            rule.last_triggered_at = _utcnow()
+            self.db.flush()

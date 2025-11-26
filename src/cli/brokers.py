@@ -173,7 +173,6 @@ def sync_accounts(
 
             console.print(f"Syncing account: {account.broker_name}...")
             result = sync_service.sync_account(account)
-            db.commit()
 
             if result.success:
                 console.print(f"[green]Sync complete![/green]")
@@ -205,7 +204,6 @@ def sync_accounts(
                 else:
                     console.print(f"  [red]Failed[/red] - {result.errors[0] if result.errors else 'Unknown error'}")
 
-            db.commit()
             console.print("\n[green]Sync complete![/green]")
 
 
@@ -236,7 +234,6 @@ def unlink_account(
 
         sync_service = BrokerSyncService(db)
         sync_service.unlink_account(account)
-        db.commit()
 
         console.print(f"[green]Account unlinked.[/green]")
 
@@ -247,6 +244,12 @@ def enable_sync(
     mode: str = typer.Option("upsert", "--mode", "-m", help="Sync mode: upsert or replace"),
 ):
     """Enable syncing for an account."""
+    # Validate sync mode
+    valid_modes = ("upsert", "replace")
+    if mode not in valid_modes:
+        console.print(f"[red]Error:[/red] Invalid mode '{mode}'. Must be one of: {', '.join(valid_modes)}")
+        raise typer.Exit(1)
+
     with get_db() as db:
         account = (
             db.query(LinkedBrokerAccount)
@@ -260,7 +263,6 @@ def enable_sync(
 
         account.sync_enabled = True
         account.sync_mode = mode
-        db.commit()
 
         console.print(f"[green]Sync enabled for {account.broker_name} (mode={mode})[/green]")
 
@@ -282,6 +284,5 @@ def disable_sync(
             raise typer.Exit(1)
 
         account.sync_enabled = False
-        db.commit()
 
         console.print(f"[yellow]Sync disabled for {account.broker_name}[/yellow]")

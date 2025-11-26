@@ -64,7 +64,7 @@ class PriceBelowCostPctEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> bool:
-        if cost_basis is None or cost_basis == 0:
+        if current_price is None or cost_basis is None or cost_basis == 0:
             return False
         drop_pct = (cost_basis - current_price) / cost_basis * 100
         return drop_pct >= threshold
@@ -76,6 +76,8 @@ class PriceBelowCostPctEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> str:
+        if current_price is None:
+            return "Price data unavailable"
         if cost_basis is None or cost_basis == 0:
             return "No cost basis available"
         drop_pct = (cost_basis - current_price) / cost_basis * 100
@@ -92,7 +94,7 @@ class PriceAboveCostPctEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> bool:
-        if cost_basis is None or cost_basis == 0:
+        if current_price is None or cost_basis is None or cost_basis == 0:
             return False
         gain_pct = (current_price - cost_basis) / cost_basis * 100
         return gain_pct >= threshold
@@ -104,6 +106,8 @@ class PriceAboveCostPctEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> str:
+        if current_price is None:
+            return "Price data unavailable"
         if cost_basis is None or cost_basis == 0:
             return "No cost basis available"
         gain_pct = (current_price - cost_basis) / cost_basis * 100
@@ -120,6 +124,8 @@ class PriceBelowValueEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> bool:
+        if current_price is None:
+            return False
         return current_price <= threshold
 
     def format_reason(
@@ -129,6 +135,8 @@ class PriceBelowValueEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> str:
+        if current_price is None:
+            return "Price data unavailable"
         return f"Price ${current_price:.2f} dropped below target ${threshold:.2f}"
 
 
@@ -142,6 +150,8 @@ class PriceAboveValueEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> bool:
+        if current_price is None:
+            return False
         return current_price >= threshold
 
     def format_reason(
@@ -151,6 +161,8 @@ class PriceAboveValueEvaluator(ConditionEvaluator):
         threshold: float,
         indicator_value: Optional[float] = None,
     ) -> str:
+        if current_price is None:
+            return "Price data unavailable"
         return f"Price ${current_price:.2f} rose above target ${threshold:.2f}"
 
 
@@ -178,7 +190,8 @@ class RSIBelowValueEvaluator(ConditionEvaluator):
         if indicator_value is None:
             return "RSI data unavailable"
         zone = "oversold" if indicator_value < 30 else "approaching oversold"
-        return f"RSI {indicator_value:.1f} dropped below {threshold:.0f} ({zone}) at price ${current_price:.2f}"
+        price_str = f"${current_price:.2f}" if current_price is not None else "N/A"
+        return f"RSI {indicator_value:.1f} dropped below {threshold:.0f} ({zone}) at price {price_str}"
 
 
 class RSIAboveValueEvaluator(ConditionEvaluator):
@@ -205,7 +218,8 @@ class RSIAboveValueEvaluator(ConditionEvaluator):
         if indicator_value is None:
             return "RSI data unavailable"
         zone = "overbought" if indicator_value > 70 else "approaching overbought"
-        return f"RSI {indicator_value:.1f} rose above {threshold:.0f} ({zone}) at price ${current_price:.2f}"
+        price_str = f"${current_price:.2f}" if current_price is not None else "N/A"
+        return f"RSI {indicator_value:.1f} rose above {threshold:.0f} ({zone}) at price {price_str}"
 
 
 # Registry mapping rule types to evaluators

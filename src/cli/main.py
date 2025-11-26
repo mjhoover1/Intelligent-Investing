@@ -1,16 +1,20 @@
 """Main CLI entry point using Typer."""
 
 import logging
+import sys
 
 import typer
 from rich.console import Console
 
 from src.db.database import init_db
-from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION
+from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION, get_settings
 
-# Configure logging
+settings = get_settings()
+
+# Configure logging using config log_level
+log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -18,6 +22,7 @@ logging.basicConfig(
 logging.getLogger("yfinance").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+logger = logging.getLogger(__name__)
 console = Console()
 app = typer.Typer(
     name="invest",
@@ -29,7 +34,13 @@ app = typer.Typer(
 @app.callback()
 def main_callback():
     """Initialize database on startup."""
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        console.print(f"[bold red]Error:[/] Failed to initialize database: {e}")
+        console.print("[dim]Check your database configuration and file permissions.[/dim]")
+        raise typer.Exit(code=1)
 
 
 # Import and add subcommands

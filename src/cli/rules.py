@@ -50,6 +50,21 @@ def add_rule(
         console.print(f"Valid types: {get_rule_type_choices()}")
         raise typer.Exit(1)
 
+    # Validate threshold based on rule type
+    if rt in (RuleType.RSI_BELOW_VALUE, RuleType.RSI_ABOVE_VALUE):
+        if not (0 <= threshold <= 100):
+            console.print("[red]Error:[/red] RSI threshold must be between 0 and 100")
+            raise typer.Exit(1)
+    elif rt in (RuleType.PRICE_BELOW_VALUE, RuleType.PRICE_ABOVE_VALUE):
+        if threshold < 0:
+            console.print("[red]Error:[/red] Price threshold cannot be negative")
+            raise typer.Exit(1)
+
+    # Validate cooldown
+    if cooldown < 0:
+        console.print("[red]Error:[/red] Cooldown cannot be negative")
+        raise typer.Exit(1)
+
     with get_db() as db:
         repo = RuleRepository(db)
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
@@ -14,6 +15,10 @@ from rich.panel import Panel
 from src.db.models import Alert
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 2
 
 
 class BaseNotifier(ABC):
@@ -106,7 +111,7 @@ class TelegramNotifier(BaseNotifier):
         self.chat_id = chat_id
 
     def notify(self, alert: Alert, ai_summary: Optional[str] = None) -> bool:
-        """Send alert via Telegram.
+        """Send alert via Telegram with retry logic.
 
         Args:
             alert: Alert to send
@@ -117,27 +122,52 @@ class TelegramNotifier(BaseNotifier):
         """
         message = self._format_message(alert, ai_summary)
 
-        try:
-            response = requests.post(
-                self.TELEGRAM_API_URL.format(token=self.bot_token),
-                json={
-                    "chat_id": self.chat_id,
-                    "text": message,
-                    "parse_mode": "HTML",
-                },
-                timeout=10,
-            )
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.post(
+                    self.TELEGRAM_API_URL.format(token=self.bot_token),
+                    json={
+                        "chat_id": self.chat_id,
+                        "text": message,
+                        "parse_mode": "HTML",
+                    },
+                    timeout=15,
+                )
 
-            if response.status_code == 200:
-                logger.debug(f"Telegram notification sent for {alert.symbol}")
-                return True
-            else:
-                logger.error(f"Telegram API error: {response.status_code} - {response.text}")
-                return False
+                if response.status_code == 200:
+                    logger.debug(f"Telegram notification sent for {alert.symbol}")
+                    return True
+                elif response.status_code >= 500:
+                    # Server error - retry
+                    logger.warning(
+                        f"Telegram server error (attempt {attempt + 1}/{MAX_RETRIES}): "
+                        f"{response.status_code}"
+                    )
+                    if attempt < MAX_RETRIES - 1:
+                        time.sleep(RETRY_DELAY_SECONDS * (attempt + 1))
+                        continue
+                else:
+                    # Client error - don't retry
+                    logger.error(f"Telegram API error: {response.status_code} - {response.text}")
+                    return False
 
-        except requests.RequestException as e:
-            logger.error(f"Telegram request failed: {e}")
-            return False
+            except requests.Timeout:
+                logger.warning(
+                    f"Telegram timeout (attempt {attempt + 1}/{MAX_RETRIES}) for {alert.symbol}"
+                )
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY_SECONDS * (attempt + 1))
+                    continue
+            except requests.RequestException as e:
+                logger.warning(
+                    f"Telegram request failed (attempt {attempt + 1}/{MAX_RETRIES}): {e}"
+                )
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY_SECONDS * (attempt + 1))
+                    continue
+
+        logger.error(f"Telegram notification failed after {MAX_RETRIES} attempts for {alert.symbol}")
+        return False
 
     def _format_message(self, alert: Alert, ai_summary: Optional[str] = None) -> str:
         """Format alert as Telegram message.

@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, TYPE_CHECKING
 
 from sqlalchemy.orm import Session
+
+
+def _utcnow() -> datetime:
+    """Get current UTC time as naive datetime for database compatibility."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 from src.db.models import Alert, Rule
 from src.core.rules.models import EvaluationResult
@@ -82,6 +87,7 @@ class AlertService:
                 ai_summary = self._generate_context(result)
                 if ai_summary:
                     alert.ai_summary = ai_summary
+                    self.db.flush()
 
             # Send notification
             if notify:
@@ -124,7 +130,8 @@ class AlertService:
         """
         rule = self.db.query(Rule).filter_by(id=rule_id).first()
         if rule:
-            rule.last_triggered_at = datetime.utcnow()
+            rule.last_triggered_at = _utcnow()
+            self.db.flush()
 
     def _generate_context(self, result: EvaluationResult) -> Optional[str]:
         """Generate AI context for an evaluation result.

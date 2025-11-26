@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -27,11 +27,23 @@ templates = Jinja2Templates(directory=str(templates_dir))
 
 
 def get_session_user(request: Request, db: Session) -> Optional[User]:
-    """Get user from session cookie if exists."""
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return None
-    return db.query(User).filter(User.id == user_id).first()
+    """Get user from session cookie if exists.
+
+    Uses JWT access_token for secure validation, not raw user_id.
+    """
+    from src.core.auth.security import decode_access_token
+
+    # Validate via JWT token (secure)
+    access_token = request.cookies.get("access_token")
+    if access_token:
+        payload = decode_access_token(access_token)
+        if payload:
+            user_id = payload.get("sub")
+            if user_id:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.is_active:
+                    return user
+    return None
 
 
 @router.get("/onboarding", response_class=HTMLResponse)
@@ -223,6 +235,19 @@ def onboarding_import_manual(
     if not user:
         return RedirectResponse(url="/onboarding", status_code=303)
 
+    # Validate positive values
+    if shares <= 0 or cost_basis <= 0:
+        holdings_count = db.query(Holding).filter(Holding.user_id == user.id).count()
+        return templates.TemplateResponse(
+            "onboarding.html",
+            {
+                "request": request,
+                "step": 2,
+                "error": "Shares and cost basis must be positive numbers",
+                "holdings_count": holdings_count,
+            },
+        )
+
     repo = HoldingRepository(db)
 
     # Check if symbol already exists
@@ -311,7 +336,7 @@ def onboarding_complete(
     if not user:
         return RedirectResponse(url="/onboarding", status_code=303)
 
-    user.onboarding_completed_at = datetime.utcnow()
+    user.onboarding_completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
 
     return RedirectResponse(url="/", status_code=303)

@@ -87,12 +87,18 @@ class RuleEngine:
             )
 
             # Get evaluator for this rule type
-            evaluator = get_evaluator(RuleType(rule.rule_type))
+            try:
+                rule_type_enum = RuleType(rule.rule_type)
+            except ValueError:
+                logger.warning(f"Skipping rule '{rule.name}': unknown rule type '{rule.rule_type}'")
+                continue
+
+            evaluator = get_evaluator(rule_type_enum)
             if evaluator is None:
+                logger.warning(f"Skipping rule '{rule.name}': no evaluator for type '{rule.rule_type}'")
                 continue
 
             # Check if this is an indicator-based rule
-            rule_type_enum = RuleType(rule.rule_type)
             is_indicator_rule = rule_type_enum.is_indicator_rule
             indicator_type = rule_type_enum.indicator_type
 

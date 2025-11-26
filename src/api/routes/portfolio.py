@@ -16,6 +16,9 @@ from src.db.models import User
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 
+# Maximum file size for CSV uploads (5MB)
+MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024
+
 
 class ImportPositionPreview(BaseModel):
     """Preview of a position to be imported."""
@@ -149,14 +152,21 @@ async def preview_schwab_import(
     Upload a Schwab positions CSV to see what would be imported
     without making any changes.
     """
-    # Read file content
+    # Check file size
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_SIZE_BYTES // (1024*1024)}MB",
+        )
+
+    # Decode content
     try:
-        content = await file.read()
         csv_content = content.decode("utf-8")
-    except Exception as e:
+    except UnicodeDecodeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error reading file: {str(e)}",
+            detail="Invalid file encoding. Please use UTF-8 encoded CSV files.",
         )
 
     # Parse CSV
@@ -202,14 +212,21 @@ async def import_schwab_positions(
             detail=f"Invalid mode: {mode}. Must be 'upsert', 'replace', or 'add_only'",
         )
 
-    # Read file content
+    # Check file size
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_SIZE_BYTES // (1024*1024)}MB",
+        )
+
+    # Decode content
     try:
-        content = await file.read()
         csv_content = content.decode("utf-8")
-    except Exception as e:
+    except UnicodeDecodeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error reading file: {str(e)}",
+            detail="Invalid file encoding. Please use UTF-8 encoded CSV files.",
         )
 
     # Import

@@ -39,6 +39,7 @@ class MonitorScheduler:
         self.ignore_cooldown = ignore_cooldown
         self.scheduler = BlockingScheduler()
         self._cycle_count = 0
+        self._shutdown_requested = False
 
     def _run_cycle(self) -> None:
         """Execute a single monitoring cycle."""
@@ -61,16 +62,22 @@ class MonitorScheduler:
         except Exception as e:
             logger.error(f"[Cycle {self._cycle_count}] Error: {e}")
 
+    def _handle_signal(self, signum, frame) -> None:
+        """Handle shutdown signals gracefully."""
+        if self._shutdown_requested:
+            # Force exit on second signal
+            logger.warning("Received second shutdown signal, forcing exit...")
+            sys.exit(1)
+
+        logger.info("Received shutdown signal, stopping scheduler...")
+        self._shutdown_requested = True
+        self.stop()
+
     def start(self) -> None:
         """Start the scheduler (blocking)."""
         # Set up signal handlers for graceful shutdown
-        def handle_signal(signum, frame):
-            logger.info("Received shutdown signal, stopping scheduler...")
-            self.stop()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, handle_signal)
-        signal.signal(signal.SIGTERM, handle_signal)
+        signal.signal(signal.SIGINT, self._handle_signal)
+        signal.signal(signal.SIGTERM, self._handle_signal)
 
         # Add the monitoring job
         self.scheduler.add_job(
@@ -90,6 +97,8 @@ class MonitorScheduler:
         try:
             self.scheduler.start()
         except (KeyboardInterrupt, SystemExit):
+            pass  # Expected on shutdown
+        finally:
             logger.info("Scheduler stopped")
 
     def stop(self) -> None:

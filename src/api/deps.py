@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Generator, Optional
 
 from fastapi import Depends, Header, HTTPException, Request, status
@@ -13,6 +14,7 @@ from src.db.models import User, UserApiKey
 from src.config import get_settings
 from src.core.auth.security import decode_access_token, verify_api_key
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # OAuth2 scheme for JWT tokens (used in Swagger UI)
@@ -46,23 +48,26 @@ def _get_user_from_jwt(token: str, db: Session) -> Optional[User]:
 
 def _get_user_from_api_key(api_key: str, db: Session) -> Optional[User]:
     """Validate API key and return user."""
-    from datetime import datetime
+    from datetime import datetime, timezone
+    from sqlalchemy import or_
 
-    # Get all active API keys
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Get active, non-expired API keys (filter at DB level)
     api_keys = db.query(UserApiKey).filter(
-        UserApiKey.is_active == True  # noqa: E712
-    ).all()
+        UserApiKey.is_active == True,  # noqa: E712
+        or_(
+            UserApiKey.expires_at.is_(None),
+            UserApiKey.expires_at >= now
+        )
+    ).limit(100).all()  # Limit to prevent loading too many keys
 
     for key in api_keys:
-        # Check expiration
-        if key.expires_at and key.expires_at < datetime.utcnow():
-            continue
-
-        # Verify the key
+        # Verify the key (bcrypt comparison)
         if verify_api_key(api_key, key.key_hash):
             # Update last used
-            key.last_used_at = datetime.utcnow()
-            db.commit()
+            key.last_used_at = now
+            db.flush()  # Use flush instead of commit - let caller handle transaction
 
             # Return the user
             user = db.query(User).filter(User.id == key.user_id).first()
@@ -107,7 +112,12 @@ def get_current_user(
         return user
 
     # Fallback: If no global API key is configured, use default user (backward compatibility)
+    # WARNING: This allows unauthenticated access - only for development/single-user mode
     if not settings.api_key:
+        logger.warning(
+            "No API key configured - allowing unauthenticated access to default user. "
+            "Set API_KEY environment variable for production use."
+        )
         default_user = db.query(User).filter_by(email=settings.default_user_email).first()
         if not default_user:
             default_user = User(email=settings.default_user_email, is_active=True)
@@ -146,7 +156,12 @@ def require_api_key(
     3. Global API key (legacy)
     """
     # If no global API key configured and no auth provided, allow (dev mode)
+    # WARNING: This allows unauthenticated access - only for development
     if not settings.api_key and not x_api_key and not bearer:
+        logger.warning(
+            "No API key configured - allowing unauthenticated API access. "
+            "Set API_KEY environment variable for production use."
+        )
         return
 
     # Check JWT Bearer token
@@ -198,22 +213,23 @@ def get_web_user(
 
     Returns None instead of raising HTTPException to allow
     web routes to handle redirects gracefully.
+
+    Uses JWT access_token for secure validation (not raw user_id).
     """
-    # Try cookie-based auth first (for web dashboard)
+    # Validate via JWT token only (secure)
     access_token = request.cookies.get("access_token")
     if access_token:
         user = _get_user_from_jwt(access_token, db)
         if user:
             return user
 
-    user_id = request.cookies.get("user_id")
-    if user_id:
-        user = db.query(User).filter(User.id == user_id).first()
-        if user and user.is_active:
-            return user
-
     # Fallback: If no global API key configured, use default user (dev mode)
+    # WARNING: This allows unauthenticated web access - only for development
     if not settings.api_key:
+        logger.warning(
+            "No API key configured - allowing unauthenticated web access. "
+            "Set API_KEY environment variable for production use."
+        )
         default_user = db.query(User).filter_by(email=settings.default_user_email).first()
         if not default_user:
             default_user = User(email=settings.default_user_email, is_active=True)

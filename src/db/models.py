@@ -1,7 +1,7 @@
 """SQLAlchemy ORM models."""
 
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional
 
 from sqlalchemy import (
@@ -14,6 +14,8 @@ from sqlalchemy import (
     DateTime,
     Text,
     ForeignKey,
+    Index,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -26,8 +28,8 @@ def generate_uuid() -> str:
 
 
 def utcnow() -> datetime:
-    """Get current UTC timestamp."""
-    return datetime.utcnow()
+    """Get current UTC timestamp (naive datetime for SQLite compatibility)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
@@ -52,7 +54,7 @@ class User(Base):
     rules = relationship("Rule", back_populates="user", cascade="all, delete-orphan")
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
-    notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False)
+    notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
     broker_accounts = relationship("LinkedBrokerAccount", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
@@ -63,6 +65,9 @@ class UserApiKey(Base):
     """Per-user API keys for programmatic access."""
 
     __tablename__ = "user_api_keys"
+    __table_args__ = (
+        Index("ix_user_api_keys_user_id", "user_id"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
@@ -84,10 +89,14 @@ class Holding(Base):
     """Portfolio holding model."""
 
     __tablename__ = "holdings"
+    __table_args__ = (
+        Index("ix_holdings_user_id", "user_id"),
+        UniqueConstraint("user_id", "symbol", name="uq_holding_user_symbol"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    symbol = Column(String(10), nullable=False)
+    symbol = Column(String(20), nullable=False)
     shares = Column(Float, nullable=False)
     cost_basis = Column(Float, nullable=False)  # Per share
     purchase_date = Column(Date, nullable=True)
@@ -96,7 +105,7 @@ class Holding(Base):
 
     # Relationships
     user = relationship("User", back_populates="holdings")
-    alerts = relationship("Alert", back_populates="holding")
+    alerts = relationship("Alert", back_populates="holding", cascade="all, delete-orphan")
 
     @property
     def total_cost(self) -> float:
@@ -111,13 +120,17 @@ class Rule(Base):
     """Alert rule model."""
 
     __tablename__ = "rules"
+    __table_args__ = (
+        Index("ix_rules_user_id", "user_id"),
+        UniqueConstraint("user_id", "name", name="uq_rule_user_name"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     name = Column(String(100), nullable=False)
     rule_type = Column(String(50), nullable=False)  # e.g., 'price_below_cost_pct'
     threshold = Column(Float, nullable=False)
-    symbol = Column(String(10), nullable=True)  # NULL = apply to all holdings
+    symbol = Column(String(20), nullable=True)  # NULL = apply to all holdings
     enabled = Column(Boolean, default=True, nullable=False)
     cooldown_minutes = Column(Integer, default=60, nullable=False)
     last_triggered_at = Column(DateTime, nullable=True)
@@ -135,12 +148,18 @@ class Alert(Base):
     """Triggered alert model."""
 
     __tablename__ = "alerts"
+    __table_args__ = (
+        Index("ix_alerts_user_id", "user_id"),
+        Index("ix_alerts_rule_id", "rule_id"),
+        Index("ix_alerts_symbol", "symbol"),
+        Index("ix_alerts_holding_id", "holding_id"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     rule_id = Column(String, ForeignKey("rules.id"), nullable=False)
     holding_id = Column(String, ForeignKey("holdings.id"), nullable=True)
-    symbol = Column(String(10), nullable=False)
+    symbol = Column(String(20), nullable=False)
     message = Column(Text, nullable=False)
     ai_summary = Column(Text, nullable=True)
     triggered_at = Column(DateTime, default=utcnow, nullable=False)
@@ -169,7 +188,7 @@ class PriceCache(Base):
 
     __tablename__ = "price_cache"
 
-    symbol = Column(String(10), primary_key=True)
+    symbol = Column(String(20), primary_key=True)
     price = Column(Float, nullable=False)
     fetched_at = Column(DateTime, nullable=False, default=utcnow)
 
@@ -181,9 +200,13 @@ class IndicatorCache(Base):
     """Technical indicator cache model."""
 
     __tablename__ = "indicator_cache"
+    __table_args__ = (
+        Index("ix_indicator_cache_lookup", "symbol", "indicator_type", "timeframe"),
+        UniqueConstraint("symbol", "indicator_type", "timeframe", name="uq_indicator_cache"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    symbol = Column(String(10), nullable=False, index=True)
+    symbol = Column(String(20), nullable=False)
     indicator_type = Column(String(20), nullable=False)  # 'rsi', 'macd', etc.
     timeframe = Column(String(10), nullable=False, default="1d")  # '1d', '1h', etc.
     value = Column(Float, nullable=False)
@@ -198,7 +221,7 @@ class MarketDataCache(Base):
 
     __tablename__ = "market_data_cache"
 
-    symbol = Column(String(10), primary_key=True)
+    symbol = Column(String(20), primary_key=True)
     high_52_week = Column(Float, nullable=True)
     low_52_week = Column(Float, nullable=True)
     fetched_at = Column(DateTime, nullable=False, default=utcnow)
@@ -240,6 +263,10 @@ class LinkedBrokerAccount(Base):
     """Linked brokerage account for automatic position syncing."""
 
     __tablename__ = "linked_broker_accounts"
+    __table_args__ = (
+        Index("ix_linked_broker_user_id", "user_id"),
+        UniqueConstraint("user_id", "broker_type", "account_id", name="uq_linked_broker_account"),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
@@ -294,7 +321,10 @@ class TelemetryEvent(Base):
         """Get properties as dict."""
         import json
         if self._properties:
-            return json.loads(self._properties)
+            try:
+                return json.loads(self._properties)
+            except (json.JSONDecodeError, TypeError):
+                return {}
         return {}
 
     @properties.setter
@@ -308,7 +338,10 @@ class TelemetryEvent(Base):
         """Get event metadata as dict."""
         import json
         if self._event_metadata:
-            return json.loads(self._event_metadata)
+            try:
+                return json.loads(self._event_metadata)
+            except (json.JSONDecodeError, TypeError):
+                return {}
         return {}
 
     @event_meta.setter

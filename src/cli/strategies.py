@@ -14,6 +14,7 @@ from src.db.database import get_db
 from src.db.models import User, Rule
 from src.core.strategies import list_presets, get_preset, StrategyPreset
 from src.core.rules.repository import RuleRepository
+from src.core.rules.models import RuleType
 
 console = Console()
 app = typer.Typer(help="Strategy presets - one-click rule bundles")
@@ -141,10 +142,6 @@ def show_strategy(
     console.print(f"\n[dim]Apply with: invest strategies apply {preset.id}[/dim]")
 
 
-# Need to import RuleType for the show command
-from src.core.rules.models import RuleType
-
-
 @app.command("apply")
 def apply_strategy(
     preset_id: str = typer.Argument(..., help="Strategy preset ID to apply"),
@@ -184,6 +181,7 @@ def apply_strategy(
             else:
                 for rule in existing:
                     db.delete(rule)
+                db.commit()
                 console.print(f"[yellow]Deleted {len(existing)} existing rules[/yellow]")
 
         # Create rules
@@ -247,6 +245,7 @@ def remove_strategy(
 
         for rule in existing:
             db.delete(rule)
+        db.commit()
 
         console.print(f"[green]Removed {len(existing)} rules from '{preset.name}'[/green]")
 

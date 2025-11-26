@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RuleType(str, Enum):
@@ -52,17 +52,35 @@ class RuleCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100)
     rule_type: RuleType
-    threshold: float = Field(..., gt=0)
+    threshold: float = Field(..., description="Can be negative for percentage rules (e.g., -10 means 10% below cost)")
     symbol: Optional[str] = Field(None, max_length=10, description="NULL = apply to all holdings")
     enabled: bool = True
     cooldown_minutes: int = Field(60, ge=0)
+
+    @model_validator(mode="after")
+    def validate_threshold_for_rule_type(self) -> "RuleCreate":
+        """Validate threshold based on rule type."""
+        rule_type = self.rule_type
+        threshold = self.threshold
+
+        # RSI rules: threshold must be between 0 and 100
+        if rule_type in (RuleType.RSI_BELOW_VALUE, RuleType.RSI_ABOVE_VALUE):
+            if threshold < 0 or threshold > 100:
+                raise ValueError(f"RSI threshold must be between 0 and 100, got {threshold}")
+
+        # Absolute price rules: threshold must be positive
+        if rule_type in (RuleType.PRICE_BELOW_VALUE, RuleType.PRICE_ABOVE_VALUE):
+            if threshold <= 0:
+                raise ValueError(f"Absolute price threshold must be positive, got {threshold}")
+
+        return self
 
 
 class RuleUpdate(BaseModel):
     """Schema for updating a rule."""
 
     name: Optional[str] = Field(None, min_length=1, max_length=100)
-    threshold: Optional[float] = Field(None, gt=0)
+    threshold: Optional[float] = None
     symbol: Optional[str] = None
     enabled: Optional[bool] = None
     cooldown_minutes: Optional[int] = Field(None, ge=0)

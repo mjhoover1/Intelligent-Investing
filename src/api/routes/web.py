@@ -19,6 +19,11 @@ from src.core.metrics import MetricsService
 
 router = APIRouter()
 
+
+def _escape_like_pattern(value: str) -> str:
+    """Escape special characters in LIKE patterns."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
 # Set up templates
 templates_dir = Path(__file__).parent.parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
@@ -136,9 +141,10 @@ def dashboard(
     strategies = list_presets()
     active_strategies = set()
     for preset in strategies:
+        escaped_id = _escape_like_pattern(preset.id)
         count = db.query(Rule).filter(
             Rule.user_id == user.id,
-            Rule.name.like(f"[{preset.id}]%"),
+            Rule.name.like(f"[{escaped_id}]%", escape="\\"),
         ).count()
         if count > 0:
             active_strategies.add(preset.id)
@@ -180,9 +186,10 @@ def apply_strategy_from_dashboard(
     repo = RuleRepository(db)
 
     # Check for existing rules from this strategy
+    escaped_id = _escape_like_pattern(preset.id)
     existing = db.query(Rule).filter(
         Rule.user_id == user.id,
-        Rule.name.like(f"[{preset.id}]%")
+        Rule.name.like(f"[{escaped_id}]%", escape="\\")
     ).all()
 
     # Skip if already applied

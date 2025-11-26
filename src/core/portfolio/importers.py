@@ -169,12 +169,14 @@ def parse_schwab_csv(csv_content: str) -> Tuple[List[ImportedPosition], List[str
             total_cost = parse_currency(cost_str)
 
             # Calculate per-share cost
-            if total_cost is not None and qty > 0:
+            if total_cost is not None and total_cost > 0 and qty > 0:
                 cost_per_share = total_cost / qty
             else:
-                # No cost basis - use 0 (user can update later)
+                # No cost basis - use 0 (user should update later)
+                # Log warning for user awareness
                 total_cost = 0.0
                 cost_per_share = 0.0
+                errors.append(f"Row {row_num}: {symbol} has no cost basis - percentage-based rules won't work until updated")
 
             # Get description
             desc = row.get("Description", "").strip()
@@ -297,7 +299,13 @@ def import_schwab_csv(
     """
     positions, parse_errors = parse_schwab_csv(csv_content)
 
-    if parse_errors:
+    # Distinguish between fatal errors (no positions parsed) and warnings
+    # Fatal errors: "Could not find header row", "CSV file too short", etc.
+    # Warnings: "no cost basis" warnings for individual rows
+    fatal_errors = [e for e in parse_errors if "cost basis" not in e.lower()]
+
+    if fatal_errors and not positions:
+        # Only fail completely if there are fatal errors AND no positions were parsed
         return ImportResult(
             created=0,
             updated=0,
@@ -306,5 +314,8 @@ def import_schwab_csv(
             positions=[],
         )
 
+    # Import whatever positions were successfully parsed
     result = import_positions(db, user_id, positions, mode)
+    # Include any parse warnings in the result
+    result.errors.extend(parse_errors)
     return result

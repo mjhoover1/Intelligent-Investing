@@ -60,6 +60,10 @@ def alert_history(
     symbol: Optional[str] = typer.Option(None, "--symbol", "-s", help="Filter by symbol"),
 ):
     """Show alert history."""
+    if limit <= 0:
+        console.print("[red]Error:[/red] Limit must be a positive number")
+        raise typer.Exit(1)
+
     with get_db() as db:
         repo = AlertRepository(db)
 
@@ -242,7 +246,7 @@ def add_feedback(
             # If we don't have price_at_alert, use triggered price from message
             alert.price_at_alert = current_price
 
-        db.commit()
+        # Note: db.commit() is handled by get_db() context manager
 
         console.print(f"[green]Feedback recorded for {alert.symbol} alert[/green]")
         console.print(f"Rating: {rating}")
@@ -255,6 +259,10 @@ def show_unrated(
     limit: int = typer.Option(20, "--limit", "-n", help="Number of alerts to show"),
 ):
     """Show alerts without feedback (need review)."""
+    if limit <= 0:
+        console.print("[red]Error:[/red] Limit must be a positive number")
+        raise typer.Exit(1)
+
     with get_db() as db:
         from src.db.models import Alert
 

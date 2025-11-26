@@ -20,8 +20,7 @@ def _get_or_create_settings(db, user_id: str) -> NotificationSettings:
     if not ns:
         ns = NotificationSettings(user_id=user_id)
         db.add(ns)
-        db.commit()
-        db.refresh(ns)
+        db.flush()  # Make visible in session, commit handled by context manager
     return ns
 
 
@@ -31,8 +30,7 @@ def _get_default_user(db) -> User:
     if not user:
         user = User(email=settings.default_user_email)
         db.add(user)
-        db.commit()
-        db.refresh(user)
+        db.flush()  # Make visible in session, commit handled by context manager
     return user
 
 
@@ -149,7 +147,12 @@ def telegram_get_chat_id():
             console.print(f"[red]Error:[/red] {response.text}")
             raise typer.Exit(1)
 
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError as e:
+            console.print(f"[red]Error parsing response:[/red] {e}")
+            raise typer.Exit(1)
+
         if not data.get("ok"):
             console.print(f"[red]Error:[/red] {data}")
             raise typer.Exit(1)

@@ -16,6 +16,19 @@ from src.db.models import Rule, User
 router = APIRouter(prefix="/strategies", dependencies=[Depends(require_api_key)])
 
 
+def _escape_like_pattern(value: str) -> str:
+    """Escape special characters in LIKE patterns.
+
+    Args:
+        value: String to escape
+
+    Returns:
+        Escaped string safe for LIKE patterns
+    """
+    # Escape backslash first, then other special chars
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 class RuleTemplateResponse(BaseModel):
     """Rule template in a strategy."""
 
@@ -125,9 +138,10 @@ def apply_strategy(
     repo = RuleRepository(db)
 
     # Check for existing rules from this strategy
+    escaped_id = _escape_like_pattern(preset.id)
     existing = db.query(Rule).filter(
         Rule.user_id == user.id,
-        Rule.name.like(f"[{preset.id}]%")
+        Rule.name.like(f"[{escaped_id}]%", escape="\\")
     ).all()
 
     if existing and not replace:
@@ -140,6 +154,7 @@ def apply_strategy(
     if replace and existing:
         for rule in existing:
             db.delete(rule)
+        db.flush()  # Ensure deletions are applied before creating new rules
 
     # Create new rules
     created_rules = []
@@ -177,9 +192,10 @@ def remove_strategy(
         raise HTTPException(status_code=404, detail=f"Strategy '{strategy_id}' not found")
 
     # Find existing rules from this strategy
+    escaped_id = _escape_like_pattern(preset.id)
     existing = db.query(Rule).filter(
         Rule.user_id == user.id,
-        Rule.name.like(f"[{preset.id}]%")
+        Rule.name.like(f"[{escaped_id}]%", escape="\\")
     ).all()
 
     if not existing:
@@ -187,5 +203,6 @@ def remove_strategy(
 
     for rule in existing:
         db.delete(rule)
+    db.flush()
 
     return {"status": "ok", "removed": len(existing)}

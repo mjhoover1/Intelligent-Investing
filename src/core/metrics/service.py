@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -200,7 +201,9 @@ class MetricsService:
                 # Calculate avg fires per week
                 if len(alerts) > 1:
                     oldest = min(alerts, key=lambda a: a.triggered_at)
-                    days_span = (latest.triggered_at - oldest.triggered_at).days or 1
+                    # Use total_seconds for accurate time span (not just integer days)
+                    total_seconds = (latest.triggered_at - oldest.triggered_at).total_seconds()
+                    days_span = max(total_seconds / 86400, 1)  # 86400 seconds per day, min 1 day
                     weeks_span = days_span / 7
                     metrics.avg_fires_per_week = len(alerts) / max(weeks_span, 1)
 
@@ -215,6 +218,10 @@ class MetricsService:
         now = datetime.utcnow()
         week_ago = now - timedelta(days=7)
         period_start = now - timedelta(days=period_days)
+
+        # Pre-load all rules for this user to avoid N+1 queries
+        rules = self.db.query(Rule).filter(Rule.user_id == user_id).all()
+        rules_by_id = {r.id: r for r in rules}
 
         # Get all unique symbols with alerts
         symbols = (
@@ -252,10 +259,10 @@ class MetricsService:
             # Price movement
             metrics.price_movement = self._calculate_price_movement(alerts)
 
-            # Rule type breakdown
+            # Rule type breakdown (using pre-loaded rules)
             rule_type_counts: Dict[str, int] = defaultdict(int)
             for alert in alerts:
-                rule = self.db.query(Rule).filter(Rule.id == alert.rule_id).first()
+                rule = rules_by_id.get(alert.rule_id)
                 if rule:
                     rule_type_counts[rule.rule_type] += 1
             metrics.alerts_by_rule_type = dict(rule_type_counts)
@@ -344,10 +351,14 @@ class MetricsService:
         metrics.feedback = self._get_feedback_breakdown_for_alerts(alerts)
         metrics.price_movement = self._calculate_price_movement(alerts)
 
-        # Rule type breakdown
+        # Rule type breakdown - batch load rules to avoid N+1
+        rule_ids = list(set(a.rule_id for a in alerts))
+        rules = self.db.query(Rule).filter(Rule.id.in_(rule_ids)).all()
+        rules_by_id = {r.id: r for r in rules}
+
         rule_type_counts: Dict[str, int] = defaultdict(int)
         for alert in alerts:
-            rule = self.db.query(Rule).filter(Rule.id == alert.rule_id).first()
+            rule = rules_by_id.get(alert.rule_id)
             if rule:
                 rule_type_counts[rule.rule_type] += 1
         metrics.alerts_by_rule_type = dict(rule_type_counts)
@@ -377,14 +388,32 @@ class MetricsService:
 
         return breakdown
 
+    def _is_valid_price(self, price) -> bool:
+        """Check if a price value is valid (not None, not NaN, and positive)."""
+        if price is None:
+            return False
+        try:
+            return not math.isnan(price) and price > 0
+        except TypeError:
+            return False
+
     def _calculate_price_movement(self, alerts: List[Alert]) -> PriceMovement:
         """Calculate price movement statistics for a list of alerts."""
         movement = PriceMovement()
 
-        # Filter alerts with price data
-        alerts_3d = [a for a in alerts if a.price_at_alert and a.price_after_3d]
-        alerts_7d = [a for a in alerts if a.price_at_alert and a.price_after_7d]
-        alerts_30d = [a for a in alerts if a.price_at_alert and a.price_after_30d]
+        # Filter alerts with valid price data (excluding None, NaN, and non-positive values)
+        alerts_3d = [
+            a for a in alerts
+            if self._is_valid_price(a.price_at_alert) and self._is_valid_price(a.price_after_3d)
+        ]
+        alerts_7d = [
+            a for a in alerts
+            if self._is_valid_price(a.price_at_alert) and self._is_valid_price(a.price_after_7d)
+        ]
+        alerts_30d = [
+            a for a in alerts
+            if self._is_valid_price(a.price_at_alert) and self._is_valid_price(a.price_after_30d)
+        ]
 
         # 3-day movement
         if alerts_3d:

@@ -48,6 +48,11 @@ def start_daemon(
     """Start the monitoring daemon (runs continuously)."""
     from src.core.scheduler import start_scheduler
 
+    # Validate interval if provided
+    if interval is not None and interval <= 0:
+        console.print("[red]Error:[/red] Interval must be a positive number")
+        raise typer.Exit(1)
+
     effective_interval = interval or settings.monitor_interval_seconds
 
     console.print("[bold]Starting Signal Sentinel Monitor[/bold]")

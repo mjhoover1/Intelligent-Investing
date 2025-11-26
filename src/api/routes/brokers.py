@@ -129,10 +129,13 @@ def create_plaid_link_token(
     try:
         link_token = plaid_provider.create_link_token(user.id)
         return CreateLinkTokenResponse(link_token=link_token)
-    except Exception as e:
+    except Exception:
+        # Log the actual error server-side but don't expose to client
+        import logging
+        logging.getLogger(__name__).exception("Failed to create Plaid link token")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create link token: {str(e)}",
+            detail="Failed to create link token. Please try again later.",
         )
 
 

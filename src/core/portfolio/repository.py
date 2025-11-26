@@ -120,10 +120,19 @@ class HoldingRepository:
 
         Returns:
             Updated holding or None if not found
+
+        Raises:
+            ValueError: If shares or cost_basis is invalid
         """
         holding = self.get_by_id(holding_id)
         if not holding:
             return None
+
+        # Validate inputs
+        if shares is not None and shares <= 0:
+            raise ValueError(f"Shares must be positive, got {shares}")
+        if cost_basis is not None and cost_basis <= 0:
+            raise ValueError(f"Cost basis must be positive, got {cost_basis}")
 
         if shares is not None:
             holding.shares = shares
@@ -132,22 +141,29 @@ class HoldingRepository:
         if purchase_date is not None:
             holding.purchase_date = purchase_date
 
+        self.db.flush()
         return holding
 
-    def delete(self, holding_id: str) -> bool:
+    def delete(self, holding_id: str, user_id: Optional[str] = None) -> bool:
         """Delete a holding.
 
         Args:
             holding_id: Holding ID
+            user_id: Optional user ID for ownership verification
 
         Returns:
-            True if deleted, False if not found
+            True if deleted, False if not found or unauthorized
         """
         holding = self.get_by_id(holding_id)
         if not holding:
             return False
 
+        # Verify ownership if user_id provided
+        if user_id is not None and holding.user_id != user_id:
+            return False
+
         self.db.delete(holding)
+        self.db.flush()
         return True
 
     def delete_by_symbol(self, symbol: str, user_id: Optional[str] = None) -> bool:
@@ -165,4 +181,5 @@ class HoldingRepository:
             return False
 
         self.db.delete(holding)
+        self.db.flush()
         return True

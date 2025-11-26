@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
@@ -107,7 +107,7 @@ class AuthService:
             raise ValueError("User account is disabled")
 
         # Update last login
-        user.last_login_at = datetime.utcnow()
+        user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
         self.db.commit()
 
         # Generate access token
@@ -196,15 +196,16 @@ class AuthService:
             UserApiKey.is_active == True  # noqa: E712
         ).all()
 
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         for key in api_keys:
             # Check expiration
-            if key.expires_at and key.expires_at < datetime.utcnow():
+            if key.expires_at and key.expires_at < now:
                 continue
 
             # Verify the key
             if verify_api_key(plain_key, key.key_hash):
                 # Update last used
-                key.last_used_at = datetime.utcnow()
+                key.last_used_at = now
                 self.db.commit()
 
                 # Return the user

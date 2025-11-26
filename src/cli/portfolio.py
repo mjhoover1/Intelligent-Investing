@@ -31,11 +31,19 @@ def add_holding(
     ),
 ):
     """Add a new holding to the portfolio."""
+    # Validate positive values
+    if shares <= 0:
+        console.print("[red]Error:[/red] Shares must be a positive number")
+        raise typer.Exit(1)
+    if cost_basis < 0:
+        console.print("[red]Error:[/red] Cost basis cannot be negative")
+        raise typer.Exit(1)
+
     with get_db() as db:
         repo = HoldingRepository(db)
 
-        # Check if symbol already exists
-        existing = repo.get_by_symbol(symbol)
+        # Check if symbol already exists (uppercase for consistency)
+        existing = repo.get_by_symbol(symbol.upper())
         if existing:
             console.print(
                 f"[yellow]Warning:[/yellow] {symbol.upper()} already exists. "
@@ -53,7 +61,7 @@ def add_holding(
                 raise typer.Exit(1)
 
         holding = repo.create(
-            symbol=symbol,
+            symbol=symbol.upper(),
             shares=shares,
             cost_basis=cost_basis,
             purchase_date=parsed_date,
@@ -230,6 +238,14 @@ def update_holding(
         console.print("[red]Error:[/red] Provide --shares and/or --cost to update.")
         raise typer.Exit(1)
 
+    # Validate values if provided
+    if shares is not None and shares <= 0:
+        console.print("[red]Error:[/red] Shares must be a positive number")
+        raise typer.Exit(1)
+    if cost_basis is not None and cost_basis < 0:
+        console.print("[red]Error:[/red] Cost basis cannot be negative")
+        raise typer.Exit(1)
+
     symbol = symbol.upper()
 
     with get_db() as db:
@@ -291,6 +307,12 @@ def import_schwab(
         invest portfolio import-schwab positions.csv --mode replace
         invest portfolio import-schwab positions.csv --user user@example.com
     """
+    # Validate import mode
+    valid_modes = ("upsert", "replace", "add_only")
+    if mode not in valid_modes:
+        console.print(f"[red]Error:[/red] Invalid mode '{mode}'. Must be one of: {', '.join(valid_modes)}")
+        raise typer.Exit(1)
+
     # Validate file
     if not file_path.exists():
         console.print(f"[red]Error:[/red] File not found: {file_path}")
@@ -299,18 +321,28 @@ def import_schwab(
     # Read CSV content
     try:
         csv_content = file_path.read_text(encoding="utf-8")
-    except Exception as e:
+    except (OSError, UnicodeDecodeError) as e:
         console.print(f"[red]Error reading file:[/red] {e}")
         raise typer.Exit(1)
 
     # Parse to preview
     positions, parse_errors = parse_schwab_csv(csv_content)
 
-    if parse_errors:
+    # Distinguish fatal errors from warnings
+    fatal_errors = [e for e in parse_errors if "cost basis" not in e.lower()]
+    warnings = [e for e in parse_errors if "cost basis" in e.lower()]
+
+    if fatal_errors and not positions:
         console.print("[red]Parse errors:[/red]")
-        for err in parse_errors:
+        for err in fatal_errors:
             console.print(f"  - {err}")
         raise typer.Exit(1)
+
+    if warnings:
+        console.print("[yellow]Warnings:[/yellow]")
+        for warn in warnings:
+            console.print(f"  - {warn}")
+        console.print()
 
     if not positions:
         console.print("[yellow]No positions found in CSV.[/yellow]")
@@ -409,7 +441,11 @@ def export_positions(
         csv_content = "\n".join(lines)
 
         if output:
-            output.write_text(csv_content)
-            console.print(f"[green]Exported {len(holdings)} positions to {output}[/green]")
+            try:
+                output.write_text(csv_content)
+                console.print(f"[green]Exported {len(holdings)} positions to {output}[/green]")
+            except OSError as e:
+                console.print(f"[red]Error writing file:[/red] {e}")
+                raise typer.Exit(1)
         else:
             console.print(csv_content)

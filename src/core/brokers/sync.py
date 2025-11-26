@@ -147,6 +147,7 @@ class BrokerSyncService:
             account.last_synced_at = datetime.utcnow()
             account.last_sync_error = None
             account.needs_reauth = False
+            self.db.flush()
 
             return result
 
@@ -155,6 +156,7 @@ class BrokerSyncService:
 
             # Update error status
             account.last_sync_error = str(e)
+            self.db.flush()
 
             return SyncResult(
                 success=False,
@@ -215,11 +217,19 @@ class BrokerSyncService:
                     else:
                         skipped += 1
                 else:
-                    # Create new
+                    # Create new - skip if no cost basis (would break percentage rules)
+                    if not pos.cost_basis_per_share or pos.cost_basis_per_share <= 0:
+                        logger.warning(
+                            f"Skipping {pos.symbol}: no valid cost basis "
+                            f"(got {pos.cost_basis_per_share})"
+                        )
+                        skipped += 1
+                        continue
+
                     self.repo.create(
                         symbol=pos.symbol,
                         shares=pos.shares,
-                        cost_basis=pos.cost_basis_per_share or 0.0,
+                        cost_basis=pos.cost_basis_per_share,
                         user_id=user_id,
                     )
                     created += 1
@@ -260,11 +270,13 @@ class BrokerSyncService:
         """
         account.is_active = False
         account.sync_enabled = False
+        self.db.flush()
         return True
 
     def delete_account(self, account: LinkedBrokerAccount) -> bool:
         """Permanently delete a linked broker account."""
         self.db.delete(account)
+        self.db.flush()
         return True
 
     def check_account_status(self, account: LinkedBrokerAccount) -> bool:

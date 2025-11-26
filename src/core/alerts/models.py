@@ -68,13 +68,15 @@ class AlertContextData(BaseModel):
     @property
     def pct_from_52_week_high(self) -> Optional[float]:
         """Calculate percent below 52-week high."""
-        if self.high_52_week and self.current_price:
+        # Explicit checks to avoid division by zero and handle edge cases
+        if self.high_52_week is not None and self.high_52_week > 0 and self.current_price is not None:
             return ((self.current_price - self.high_52_week) / self.high_52_week) * 100
         return None
 
     @property
     def pct_from_52_week_low(self) -> Optional[float]:
         """Calculate percent above 52-week low."""
-        if self.low_52_week and self.current_price:
+        # Explicit checks to avoid division by zero and handle edge cases
+        if self.low_52_week is not None and self.low_52_week > 0 and self.current_price is not None:
             return ((self.current_price - self.low_52_week) / self.low_52_week) * 100
         return None

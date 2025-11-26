@@ -93,6 +93,7 @@ def set_password(
 @app.command("deactivate")
 def deactivate(
     email: str = typer.Argument(..., help="User email address"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
 ):
     """Deactivate a user account."""
     with get_db() as db:
@@ -102,6 +103,12 @@ def deactivate(
             console.print(f"[red]Error: User '{email}' not found[/red]")
             raise typer.Exit(1)
 
+        if not force:
+            confirm = typer.confirm(f"Deactivate user '{email}'? They will no longer be able to log in.")
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Exit(0)
+
         user.is_active = False
         db.commit()
         console.print(f"[green]User {email} deactivated[/green]")
@@ -110,6 +117,7 @@ def deactivate(
 @app.command("activate")
 def activate(
     email: str = typer.Argument(..., help="User email address"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
 ):
     """Activate a user account."""
     with get_db() as db:
@@ -119,6 +127,12 @@ def activate(
             console.print(f"[red]Error: User '{email}' not found[/red]")
             raise typer.Exit(1)
 
+        if not force:
+            confirm = typer.confirm(f"Activate user '{email}'?")
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Exit(0)
+
         user.is_active = True
         db.commit()
         console.print(f"[green]User {email} activated[/green]")
@@ -127,6 +141,7 @@ def activate(
 @app.command("make-admin")
 def make_admin(
     email: str = typer.Argument(..., help="User email address"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
 ):
     """Grant admin privileges to a user."""
     with get_db() as db:
@@ -135,6 +150,12 @@ def make_admin(
         if not user:
             console.print(f"[red]Error: User '{email}' not found[/red]")
             raise typer.Exit(1)
+
+        if not force:
+            confirm = typer.confirm(f"Grant admin privileges to '{email}'? Admins have full system access.")
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Exit(0)
 
         user.is_admin = True
         db.commit()
