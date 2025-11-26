@@ -1,6 +1,9 @@
 """FastAPI application setup."""
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from src.db.database import init_db
 from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth, brokers
@@ -11,6 +14,11 @@ app = FastAPI(
     description=PRODUCT_DESCRIPTION,
     version=PRODUCT_VERSION,
 )
+
+# Mount static files
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.on_event("startup")

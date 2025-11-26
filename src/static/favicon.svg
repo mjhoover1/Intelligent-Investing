@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Simple shield shape -->
+  <path
+    d="M16 2 L28 6 L28 14 C28 22 22 27 16 30 C10 27 4 22 4 14 L4 6 Z"
+    fill="#4F46E5"
+  />
+  <!-- Signal waves -->
+  <path d="M12 16 Q16 12 20 16" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M10 19 Q16 11 22 19" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="16" cy="20" r="2" fill="#14B8A6"/>
+</svg>
