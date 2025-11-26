@@ -1,48 +1,157 @@
-# Intelligent Investing - AI Portfolio Copilot
+# Signal Sentinel
 
-An AI-driven portfolio monitoring system where **you define the rules** and the system watches your investments 24/7, alerting you when your criteria are met with contextual AI explanations.
+**Your AI-powered watchdog for market signals**
 
-## What This Is
+Signal Sentinel is an automated, rule-driven portfolio monitoring system that watches your positions 24/7, evaluates technical and price-based conditions, and sends intelligent alerts with AI-powered context.
 
-This is a **rule-based portfolio monitoring engine** with AI-powered context and summarization. You set the criteria, and the system:
+> You define the rules.
+> Signal Sentinel does the watching.
 
-- Monitors your portfolio against your rules
-- Sends alerts when conditions trigger
-- Provides AI-generated context (historical patterns, news summaries, technical analysis)
-- Helps you stay informed without constantly watching the markets
+## Core Features
 
-**This is NOT a robo-advisor or trading bot.** The system does not make decisions or execute trades. It provides facts, context, and education based on rules YOU define.
+- **Real-time portfolio monitoring** - Track all your holdings with live price data
+- **AI-enhanced alerts** - Get notifications with concise AI summaries explaining why signals fired
+- **Rule engine** - Price thresholds, RSI conditions, 52-week ranges, recovery zones, and more
+- **Strategy presets** - One-click setups: swing trader, capital preservation, dip hunter...
+- **Telegram notifications** - Instant alerts to your phone
+- **Web dashboard** - Portfolio, rules, and alerts in one clean interface
+- **Broker sync** - Import from Schwab CSV or sync automatically via Plaid
+- **REST API** - Full API access for custom integrations
+- **CLI** - Complete command-line interface
+- **Docker deployable** - Easy containerized deployment
+- **Multi-user authentication** - JWT tokens, API keys, user isolation
 
-## Key Features
+## Why Signal Sentinel?
 
-### User-Defined Rule Engine
-- Create custom alert conditions: "Alert me if any stock drops 20% below my cost basis"
-- Technical indicator triggers: RSI, MACD, moving average crossovers, volume spikes
-- Portfolio-wide rules: "Alert if total portfolio drawdown exceeds 8% in 30 days"
-- Combine multiple conditions with AND/OR logic
+Markets move fast.
+You can't watch everything — but Signal Sentinel can.
 
-### Cost-Basis Aware Monitoring
-- Track positions across multiple brokers
-- Alerts relative to YOUR entry price, not just current price
-- Understand your actual P&L position at all times
+With customizable guardrails, technical indicators, and intelligent summaries, you're always ahead of important movements without drowning in noise.
 
-### AI-Powered Context (Not Advice)
-- News summarization for your holdings
-- Sentiment analysis of headlines
-- Historical pattern recognition: "RSI < 30 historically correlates with oversold conditions"
-- Technical analysis explanations in plain language
+## Quick Start
 
-### Swing Detection Alerts
-- Pattern recognition for potential swing tops/bottoms
-- Volume divergence detection
-- Multi-indicator confluence alerts
-- Always presented as observations, not recommendations
+### Installation
 
-### Multi-Channel Notifications
-- Email alerts
-- SMS notifications
-- Discord/Telegram integration
-- Webhook support for custom integrations
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/signal-sentinel.git
+cd signal-sentinel
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+```
+
+### Basic Usage
+
+```bash
+# Add a position
+invest portfolio add AAPL --shares 10 --cost-basis 150.00
+
+# Create an alert rule
+invest rules add "AAPL below $140" --ticker AAPL --type price_below --threshold 140
+
+# Apply a strategy preset
+invest strategies apply dip-hunter --tickers AAPL,MSFT,GOOGL
+
+# Run monitoring
+invest monitor once
+
+# Start the web dashboard
+uvicorn src.api.app:app --reload
+# Visit http://localhost:8000
+```
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `invest portfolio` | Manage portfolio holdings |
+| `invest rules` | Create and manage alert rules |
+| `invest alerts` | View triggered alerts |
+| `invest strategies` | Apply strategy presets |
+| `invest monitor` | Run monitoring cycles |
+| `invest notifications` | Configure Telegram alerts |
+| `invest brokers` | Manage broker integrations |
+| `invest users` | User management |
+| `invest version` | Show version info |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      User Interface                         │
+│          (Web Dashboard / CLI / REST API)                   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                      Core Services                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │ Rule Engine │  │ AI Context  │  │ Alert Dispatcher    │ │
+│  │             │  │ Generator   │  │ (Telegram/Email)    │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Layer                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │ Portfolio   │  │ Market Data │  │ Broker Sync         │ │
+│  │ Repository  │  │ (yfinance)  │  │ (Plaid/CSV)         │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Rule Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `price_below` | Alert when price drops below threshold | "Alert if AAPL < $140" |
+| `price_above` | Alert when price rises above threshold | "Alert if AAPL > $200" |
+| `price_below_cost_pct` | Alert on % loss from cost basis | "Alert if any stock -20%" |
+| `price_above_cost_pct` | Alert on % gain from cost basis | "Alert if any stock +50%" |
+| `rsi_below` | Alert on oversold RSI | "Alert if RSI < 30" |
+| `rsi_above` | Alert on overbought RSI | "Alert if RSI > 70" |
+| `price_above_52w_high_pct` | Near 52-week high | "Alert if within 5% of high" |
+| `price_below_52w_low_pct` | Near 52-week low | "Alert if within 5% of low" |
+| `recovery_from_low_pct` | Bounce from lows | "Alert if +10% from low" |
+
+## Strategy Presets
+
+Pre-configured rule bundles for common use cases:
+
+- **Dip Hunter** - Catch oversold opportunities (RSI < 30, recovery signals)
+- **Swing Trader** - Track momentum reversals and breakouts
+- **Capital Preservation** - Protective alerts for large drawdowns
+- **Value Investor** - Near 52-week lows, deep discounts
+- **Momentum Player** - Breakouts, new highs, strong RSI
+
+## Configuration
+
+Create a `.env` file with your settings:
+
+```bash
+# Required
+API_KEY=your_secure_api_key
+
+# Telegram (recommended)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# AI Summaries (optional)
+OPENAI_API_KEY=your_openai_key
+
+# Broker Sync (optional)
+PLAID_CLIENT_ID=your_client_id
+PLAID_SECRET=your_secret
+PLAID_ENV=sandbox
+```
 
 ## Legal Disclaimer
 
@@ -54,147 +163,10 @@ This is a **rule-based portfolio monitoring engine** with AI-powered context and
 - All alerts are based on rules YOU define
 - Historical patterns are not guarantees of future performance
 
-You are solely responsible for your investment decisions. Consult a licensed financial advisor for personalized advice.
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      User Interface                         │
-│              (Dashboard / Rule Builder / Alerts)            │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                      Core Services                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │ Rule Engine │  │ AI Context  │  │ Alert Dispatcher    │ │
-│  │             │  │ Generator   │  │                     │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                      Data Layer                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │ Portfolio   │  │ Market Data │  │ News & Sentiment    │ │
-│  │ Aggregator  │  │ Provider    │  │ Feeds               │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Project Structure
-
-```
-intelligent_investing/
-├── src/
-│   ├── core/              # Core business logic
-│   │   ├── rules/         # Rule engine and condition evaluators
-│   │   ├── alerts/        # Alert generation and dispatch
-│   │   └── portfolio/     # Portfolio management and tracking
-│   ├── data/              # Data providers and aggregators
-│   │   ├── market/        # Market data feeds (prices, indicators)
-│   │   ├── news/          # News and sentiment data
-│   │   └── brokers/       # Broker API integrations
-│   ├── ai/                # AI/LLM integration layer
-│   │   ├── context/       # Context generation for alerts
-│   │   ├── summarization/ # News and analysis summarization
-│   │   └── patterns/      # Pattern recognition helpers
-│   ├── api/               # REST API endpoints
-│   └── utils/             # Shared utilities
-├── tests/                 # Test suite
-├── config/                # Configuration files
-├── docs/                  # Documentation
-├── requirements.txt       # Python dependencies
-└── README.md
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.11+
-- API keys for market data (Alpaca, Finnhub, or similar)
-- OpenAI API key (for AI context generation)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/intelligent_investing.git
-cd intelligent_investing
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy environment template and configure
-cp .env.example .env
-# Edit .env with your API keys
-```
-
-### Configuration
-
-1. Add your portfolio data (CSV import or broker API connection)
-2. Define your rules in the rule builder
-3. Configure notification channels
-4. Start the monitoring service
-
-## Example Rules
-
-```python
-# Alert if any position drops 20% below cost basis
-{
-    "name": "Cost Basis Protection",
-    "condition": "position.current_price < position.cost_basis * 0.80",
-    "alert": "{{symbol}} is now {{percent_change}}% below your cost basis"
-}
-
-# Swing top detection
-{
-    "name": "Potential Swing Top",
-    "condition": "rsi > 70 AND macd_histogram < macd_histogram[-1] AND volume > avg_volume_20d * 1.5",
-    "alert": "{{symbol}} showing potential swing top signals"
-}
-
-# News alert for large positions
-{
-    "name": "Major News Alert",
-    "condition": "position.value > 2000 AND news.sentiment_change > 0.3",
-    "alert": "Significant news for {{symbol}}: {{news.summary}}"
-}
-```
-
-## Roadmap
-
-### Phase 1: MVP (Personal Use)
-- [ ] Manual portfolio import (CSV)
-- [ ] Basic rule engine with price/percentage conditions
-- [ ] Email notifications
-- [ ] Simple AI context using OpenAI API
-
-### Phase 2: Enhanced Intelligence
-- [ ] Technical indicator library (RSI, MACD, Bollinger, etc.)
-- [ ] News API integration with sentiment analysis
-- [ ] Swing detection algorithms
-- [ ] Dashboard UI
-
-### Phase 3: SaaS Platform
-- [ ] User authentication and accounts
-- [ ] Multi-broker integration (Plaid, Alpaca)
-- [ ] Advanced rule builder UI
-- [ ] Subscription billing (Stripe)
-- [ ] Mobile notifications
-
-## Contributing
-
-This project is currently in early development. Contributions welcome once the core architecture is established.
-
-## License
-
-MIT License - See LICENSE file for details.
+You are solely responsible for your investment decisions.
 
 ---
 
-**Remember:** This tool helps you stay informed. Your investment decisions are your own.
+**Signal Sentinel** - Define the rules. We watch the market.
+
+&copy; 2025 Signal Sentinel. All rights reserved.

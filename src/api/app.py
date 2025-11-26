@@ -4,11 +4,12 @@ from fastapi import FastAPI
 
 from src.db.database import init_db
 from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth, brokers
+from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION, PRODUCT_DESCRIPTION
 
 app = FastAPI(
-    title="Intelligent Investing API",
-    description="AI Portfolio Copilot - Rule-based portfolio monitoring with AI context",
-    version="0.1.0",
+    title=f"{PRODUCT_NAME} API",
+    description=PRODUCT_DESCRIPTION,
+    version=PRODUCT_VERSION,
 )
 
 
@@ -21,7 +22,12 @@ def startup():
 @app.get("/api/health")
 def health():
     """Health check endpoint."""
-    return {"status": "ok"}
+    return {
+        "name": PRODUCT_NAME,
+        "version": PRODUCT_VERSION,
+        "status": "ok",
+        "tagline": PRODUCT_TAGLINE,
+    }
 
 
 # Mount API routers

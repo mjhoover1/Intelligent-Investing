@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 
 from src.db.database import init_db
+from src.config import PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_VERSION
 
 # Configure logging
 logging.basicConfig(
@@ -20,7 +21,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 console = Console()
 app = typer.Typer(
     name="invest",
-    help="Intelligent Investing - AI Portfolio Copilot CLI",
+    help=f"{PRODUCT_NAME} — {PRODUCT_TAGLINE}",
     add_completion=False,
 )
 
@@ -51,11 +52,31 @@ app.add_typer(users_app, name="users", help="User management and authentication"
 app.add_typer(brokers_app, name="brokers", help="Broker integrations and position sync")
 
 
+ASCII_BANNER = """
+[bold #4F46E5]███████╗██╗ ██████╗ ███╗   ██╗ █████╗ ██╗
+██╔════╝██║██╔════╝ ████╗  ██║██╔══██╗██║
+███████╗██║██║  ███╗██╔██╗ ██║███████║██║
+╚════██║██║██║   ██║██║╚██╗██║██╔══██║██║
+███████║██║╚██████╔╝██║ ╚████║██║  ██║███████╗
+╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
+
+███████╗███████╗███╗   ██╗████████╗██╗███╗   ██╗███████╗██╗
+██╔════╝██╔════╝████╗  ██║╚══██╔══╝██║████╗  ██║██╔════╝██║
+███████╗█████╗  ██╔██╗ ██║   ██║   ██║██╔██╗ ██║█████╗  ██║
+╚════██║██╔══╝  ██║╚██╗██║   ██║   ██║██║╚██╗██║██╔══╝  ██║
+███████║███████╗██║ ╚████║   ██║   ██║██║ ╚████║███████╗███████╗
+╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝[/]
+
+[bold #14B8A6]        Your AI-powered market watchdog.[/]
+"""
+
+
 @app.command()
 def version():
-    """Show version information."""
-    console.print("[bold]Intelligent Investing[/bold] v0.1.0")
-    console.print("AI Portfolio Copilot - MVP")
+    """Show version information with ASCII banner."""
+    console.print(ASCII_BANNER)
+    console.print(f"[bold]Version:[/] {PRODUCT_VERSION}")
+    console.print(f"[bold]Tagline:[/] {PRODUCT_TAGLINE}")
 
 
 if __name__ == "__main__":

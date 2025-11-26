@@ -3,37 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Intelligent Investing{% endblock %}</title>
+    <title>{% block title %}Signal Sentinel{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        montserrat: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        sentinel: {
+                            indigo: '#4F46E5',
+                            blue: '#1E3A8A',
+                            teal: '#14B8A6',
+                            slate: '#0F172A',
+                        },
+                        alert: {
+                            red: '#DC2626',
+                            green: '#16A34A',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         .gain { color: #16a34a; }
         .loss { color: #dc2626; }
         .neutral { color: #6b7280; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-indigo-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-bold">Intelligent Investing</h1>
-                    <span class="text-indigo-200 text-sm">AI Portfolio Copilot</span>
-                </div>
-                <div class="flex items-center space-x-4 text-sm">
-                    <a href="/" class="hover:text-indigo-200">Dashboard</a>
-                    <a href="/docs" class="hover:text-indigo-200">API Docs</a>
-                </div>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <header class="bg-sentinel-slate text-white py-4 px-6 shadow flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-sentinel-indigo rounded-lg flex items-center justify-center font-bold text-xl">
+                SS
             </div>
+            <h1 class="text-3xl font-bold font-montserrat tracking-tight">Signal Sentinel</h1>
         </div>
-    </nav>
+        <div class="flex items-center gap-6">
+            <p class="text-sentinel-teal text-sm italic hidden md:block">Your AI-powered market watchdog.</p>
+            <nav class="flex items-center space-x-4 text-sm">
+                <a href="/" class="hover:text-sentinel-teal transition-colors">Dashboard</a>
+                <a href="/docs" class="hover:text-sentinel-teal transition-colors">API Docs</a>
+            </nav>
+        </div>
+    </header>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-800 text-gray-400 text-sm py-4 mt-8">
+    <footer class="bg-sentinel-slate text-gray-400 text-sm py-6 mt-8">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            Intelligent Investing - Rule-based portfolio monitoring with AI context
+            <p class="mb-2">Signal Sentinel - Define the rules. We watch the market.</p>
+            <p class="text-gray-500 text-xs">&copy; 2025 Signal Sentinel. All rights reserved.</p>
         </div>
     </footer>
 </body>
