@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Intelligent Investing{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gain { color: #16a34a; }
+        .loss { color: #dc2626; }
+        .neutral { color: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">Intelligent Investing</h1>
+                    <span class="text-indigo-200 text-sm">AI Portfolio Copilot</span>
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                    <a href="/" class="hover:text-indigo-200">Dashboard</a>
+                    <a href="/docs" class="hover:text-indigo-200">API Docs</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 text-sm py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            Intelligent Investing - Rule-based portfolio monitoring with AI context
+        </div>
+    </footer>
+</body>
+</html>

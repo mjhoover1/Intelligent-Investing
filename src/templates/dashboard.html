@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Intelligent Investing{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Portfolio Summary -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Portfolio Summary</h2>
+            <span class="text-sm text-gray-500">{{ holdings|length }} holdings</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded p-4">
+                <div class="text-sm text-gray-500">Total Value</div>
+                <div class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(total_value) }}</div>
+            </div>
+            <div class="bg-gray-50 rounded p-4">
+                <div class="text-sm text-gray-500">Total Cost</div>
+                <div class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(total_cost) }}</div>
+            </div>
+            <div class="bg-gray-50 rounded p-4">
+                <div class="text-sm text-gray-500">Total P&L</div>
+                <div class="text-2xl font-bold {% if total_pnl >= 0 %}gain{% else %}loss{% endif %}">
+                    {{ "%+.2f"|format(total_pnl) }} ({{ "%+.1f"|format(total_pnl_pct) }}%)
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded p-4">
+                <div class="text-sm text-gray-500">Active Rules</div>
+                <div class="text-2xl font-bold text-gray-800">{{ rules|selectattr('enabled')|list|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Holdings Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Holdings</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Basis</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Market Value</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P&L</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P&L %</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for h in holdings %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-medium text-gray-900">{{ h.symbol }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">{{ "%.2f"|format(h.shares) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">${{ "%.2f"|format(h.cost_basis) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                            {% if h.current_price %}${{ "%.2f"|format(h.current_price) }}{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                            {% if h.market_value %}${{ "%.2f"|format(h.market_value) }}{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right {% if h.pnl and h.pnl >= 0 %}gain{% elif h.pnl %}loss{% else %}neutral{% endif %}">
+                            {% if h.pnl %}{{ "%+.2f"|format(h.pnl) }}{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right {% if h.pnl_pct and h.pnl_pct >= 0 %}gain{% elif h.pnl_pct %}loss{% else %}neutral{% endif %}">
+                            {% if h.pnl_pct %}{{ "%+.1f"|format(h.pnl_pct) }}%{% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No holdings found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Rules Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Rules</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Threshold</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cooldown</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for r in rules %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-medium text-gray-900">{{ r.name }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                {% if 'rsi' in r.rule_type %}bg-purple-100 text-purple-800
+                                {% elif 'below' in r.rule_type %}bg-red-100 text-red-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ r.rule_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {{ r.symbol or 'All' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                            {% if 'pct' in r.rule_type %}{{ r.threshold }}%
+                            {% elif 'rsi' in r.rule_type %}{{ r.threshold }}
+                            {% else %}${{ "%.2f"|format(r.threshold) }}{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            {% if r.enabled %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                            {{ r.cooldown_minutes }}m
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No rules configured</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Alerts Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800">Recent Alerts</h2>
+            <span class="text-sm text-gray-500">Last 20 alerts</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Summary</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for a in alerts %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ a.triggered_at.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-medium text-gray-900">{{ a.symbol }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-md truncate">
+                            {{ a.message }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 max-w-sm">
+                            {% if a.ai_summary %}
+                            <details class="cursor-pointer">
+                                <summary class="text-indigo-600 hover:text-indigo-800">View AI context</summary>
+                                <p class="mt-2 text-gray-600 whitespace-pre-wrap">{{ a.ai_summary }}</p>
+                            </details>
+                            {% else %}
+                            <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">No alerts yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
