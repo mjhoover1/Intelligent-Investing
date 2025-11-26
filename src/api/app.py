@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 
 from src.db.database import init_db
-from src.api.routes import portfolio, rules, alerts, monitor, web, strategies
+from src.api.routes import portfolio, rules, alerts, monitor, web, strategies, auth
 
 app = FastAPI(
     title="Intelligent Investing API",
@@ -25,6 +25,7 @@ def health():
 
 
 # Mount API routers
+app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(portfolio.router, prefix="/api/portfolio", tags=["portfolio"])
 app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])

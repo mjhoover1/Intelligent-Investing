@@ -31,21 +31,48 @@ def utcnow() -> datetime:
 
 
 class User(Base):
-    """User model (stub for future SaaS)."""
+    """User model for multi-user SaaS."""
 
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String(255), unique=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=True)  # Null for legacy/default users
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=utcnow, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)
 
     # Relationships
     holdings = relationship("Holding", back_populates="user", cascade="all, delete-orphan")
     rules = relationship("Rule", back_populates="user", cascade="all, delete-orphan")
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
+    api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
+    notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False)
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"
+
+
+class UserApiKey(Base):
+    """Per-user API keys for programmatic access."""
+
+    __tablename__ = "user_api_keys"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    key_hash = Column(String(255), nullable=False)  # Hashed API key
+    name = Column(String(100), nullable=False)  # Friendly name for the key
+    last_used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)  # Null = never expires
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="api_keys")
+
+    def __repr__(self) -> str:
+        return f"<UserApiKey(id={self.id}, name={self.name})>"
 
 
 class Holding(Base):
@@ -196,6 +223,9 @@ class NotificationSettings(Base):
 
     created_at = Column(DateTime, default=utcnow, nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="notification_settings")
 
     def __repr__(self) -> str:
         return f"<NotificationSettings(user_id={self.user_id}, telegram={self.telegram_enabled})>"
