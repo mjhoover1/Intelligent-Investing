@@ -114,6 +114,15 @@ class Alert(Base):
     triggered_at = Column(DateTime, default=utcnow, nullable=False)
     notified = Column(Boolean, default=False, nullable=False)
 
+    # Signal quality tracking (Phase 11)
+    feedback = Column(String(20), nullable=True)  # 'useful', 'noise', 'actionable'
+    feedback_notes = Column(Text, nullable=True)
+    price_at_alert = Column(Float, nullable=True)
+    price_after_3d = Column(Float, nullable=True)
+    price_after_7d = Column(Float, nullable=True)
+    price_after_30d = Column(Float, nullable=True)
+    feedback_at = Column(DateTime, nullable=True)
+
     # Relationships
     user = relationship("User", back_populates="alerts")
     rule = relationship("Rule", back_populates="alerts")
