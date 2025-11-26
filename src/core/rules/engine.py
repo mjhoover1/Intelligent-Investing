@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -11,6 +12,8 @@ from src.db.models import Holding, Rule
 from src.data.market.provider import MarketDataProvider
 from .models import EvaluationResult, RuleType
 from .evaluators import get_evaluator
+
+logger = logging.getLogger(__name__)
 
 
 class RuleEngine:
@@ -55,7 +58,10 @@ class RuleEngine:
         )
 
         if not holdings:
+            logger.debug("No holdings found for user")
             return []
+
+        logger.info(f"Evaluating {len(rules)} rule(s) against {len(holdings)} holding(s)")
 
         # Build symbol -> holdings map
         holdings_by_symbol: Dict[str, List[Holding]] = {}
@@ -68,9 +74,11 @@ class RuleEngine:
 
         results: List[EvaluationResult] = []
 
+        skipped_cooldown = 0
         for rule in rules:
             # Check cooldown
             if self._is_in_cooldown(rule):
+                skipped_cooldown += 1
                 continue
 
             # Determine which symbols this rule applies to
@@ -124,6 +132,10 @@ class RuleEngine:
                         )
                     )
 
+        if skipped_cooldown > 0:
+            logger.debug(f"Skipped {skipped_cooldown} rule(s) due to cooldown")
+
+        logger.info(f"Evaluation complete: {len(results)} rule(s) triggered")
         return results
 
     def evaluate_rule(
